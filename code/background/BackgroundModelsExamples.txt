@@ -1,0 +1,20 @@
+Fouvry
+
+gamma mass_star[Msun] a0[mpc] Mtot(<a0)
+1.75  1.0             2000.0   4300000.0
+
+============================================
+
+TopHeavy Colorado
+
+gamma mass_star[Msun] a0[mpc] Mtot(<a0)
+1.5   1.0             100.0   7900.0
+1.8   50.0            100.0   38000.0
+
+============================================
+
+TopHeavy modified
+
+gamma mass_star[Msun] a0[mpc] Mtot(<a0)
+1.5   1.0             100.0   7900.0
+1.8   100.0           100.0   38000.0
