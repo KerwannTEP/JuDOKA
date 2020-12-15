@@ -1,3 +1,3 @@
-# JuDO
+# JuDOKA
 
-Julia Diffusion Orbitale
+Julia Diffusion of Orbits for Keplerian Actions
