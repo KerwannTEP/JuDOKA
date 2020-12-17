@@ -2,7 +2,6 @@
 # Computation of the NR diffusion coefficients
 ##################################################
 
-
 ##################################################
 # Preliminary useful functions
 ##################################################
@@ -61,19 +60,19 @@ R-averaged distribution function in binding enery E, defined in E space, for the
 R is the squared reduced angular momentum j^2.
 """
 function DF_E(E::Float64,iBath::Int64)
-    E0 = E_bind(taba0Bath[iBath])
-    NBar = tabNbarBath[iBath]
+    E0    = E_bind(taba0Bath[iBath])
+    NBar  = tabNbarBath[iBath]
     gamma = tabgammaBath[iBath]
     return NBar/prefac_J(E) * (G*mBH)/(2.0*E^2) * (E0/E)^(2.0-gamma)
 end
 
 """
-    Gam(iBath)
+    gamma_prefactor(iBath)
     
 Gamma prefactor which appears in Fi integrals, for the family indexed by iBath in the source file.
 Used in the computation of the non-resonant diffusion coefficients.
 """
-function Gam(iBath::Int64)
+function gamma_prefactor(iBath::Int64)
     m = tabmBath[iBath]
     return 4.0*pi*(G*m)^2 * logCoulomb(iBath)
 end
@@ -91,12 +90,12 @@ function xpm(R::Float64)
 end
 
 """
-    s(Ep,E)
+    inverse_reduced_E_bind(Ep,E)
 
 Reduced binding energy used in the computation of integrals Fi.
 Defined as Ep over E.
 """
-function s(Ep::Float64,E::Float64)
+function inverse_reduced_E_bind(Ep::Float64,E::Float64)
     return Ep/E
 end
 
@@ -105,11 +104,11 @@ end
 ##################################################
 
 """
-    beta(R,s)
+    _beta(R,s)
 
 Bound in Ck integral when x_plus > 1/s, where s is the reduced binding energy and R is the squared reduced angular momentum.
 """
-function beta(R,s)
+function _beta(R::Float64,s::Float64)
     xp,xm = xpm(R)
     res = 1.0/(xm*s)
     res = sqrt(res)
@@ -117,11 +116,11 @@ function beta(R,s)
 end
 
 """
-    eta(R)
+    _eta(R)
 
 Bound in Ak integral when xp <= 1/s, where s is the reduced binding energy and R is the squared reduced angular momentum.
 """
-function eta(R)
+function _eta(R::Float64)
     xp,xm = xpm(R)
     res = 1.0/(2.0*xm)
     res = sqrt(res)
@@ -129,11 +128,11 @@ function eta(R)
 end
 
 """
-    delta(R)
+    _delta(R)
 
 Bound in Bk integral when xp <= 1/s, where s is the reduced binding energy and R is the squared reduced angular momentum.
 """
-function delta(R)
+function _delta(R::Float64)
     xp,xm = xpm(R)
     res = 1.0/(2.0*xp)
     res = sqrt(res)
@@ -145,10 +144,11 @@ end
 ##################################################
 
 """
-    fB(theta,s,R)
+    _fB(theta,s,R)
 
 Computes all seven integrands within Bk integrals for 1<=k<=7.
 Returns a 7-uple, ordered from k=1 to k=7.
+See `Conrad et Kulsrud (1978)`.
 
 # Remarks
 - All the integrands are computed at the same time.
@@ -160,25 +160,27 @@ Returns a 7-uple, ordered from k=1 to k=7.
 - `s    ::Float64`: Reduced binding energy.
 - `R    ::Float64`: Squared reduced angular momentum j^2.
 """
-function fB(theta::Float64,s::Float64,R::Float64)
+function _fB(theta::Float64,s::Float64,R::Float64)
     xp,xm = xpm(R)
-    ym = xm/xp
-    csTh = cos(theta)
-    fB1 = csTh^3/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)/sqrt(1.0-xp*csTh^2)
-    fB2 = csTh^5/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)/(1.0-xp*csTh^2)^(3/2)
-    fB3 = csTh^7/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)/sqrt(1.0-xp*csTh^2)
-    fB4 = csTh/sqrt(csTh^2-ym) * (1.0-s*xp*csTh^2)^(3/2)/sqrt(1.0-xp*csTh^2)
-    fB5 = csTh^3/sqrt(csTh^2-ym) * (1.0-s*xp*csTh^2)^(3/2)/(1.0-xp*csTh^2)^(3/2)
-    fB6 = csTh^5/sqrt(csTh^2-ym) * (1.0-s*xp*csTh^2)^(3/2)/(1.0-xp*csTh^2)^(5/2)
-    fB7 = csTh^7/sqrt(csTh^2-ym) * (1.0-s*xp*csTh^2)^(3/2)/(1.0-xp*csTh^2)^(3/2)
+    ym    = xm/xp
+    csTh  = cos(theta)
+
+    fB1 = csTh^3/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)^(1)/sqrt(1.0-xp*csTh^2)^(1)
+    fB2 = csTh^5/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)^(1)/sqrt(1.0-xp*csTh^2)^(3)
+    fB3 = csTh^7/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)^(1)/sqrt(1.0-xp*csTh^2)^(1)
+    fB4 = csTh/sqrt(csTh^2-ym)   * sqrt(1.0-s*xp*csTh^2)^(3)/sqrt(1.0-xp*csTh^2)^(1)
+    fB5 = csTh^3/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)^(3)/sqrt(1.0-xp*csTh^2)^(3)
+    fB6 = csTh^5/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)^(3)/sqrt(1.0-xp*csTh^2)^(5)
+    fB7 = csTh^7/sqrt(csTh^2-ym) * sqrt(1.0-s*xp*csTh^2)^(3)/sqrt(1.0-xp*csTh^2)^(3)
     return fB1,fB2,fB3,fB4,fB5,fB6,fB7
 end
 
 """
-    fAC(theta,s,R)
+    _fAC(theta,s,R)
 
 Computes all 14 integrands within Ak and Ck integrals for 1<=k<=7.
 Returns a 7-uple, ordered from k=1 to k=7.
+See `Conrad et Kulsrud (1978)`.
 
 # Remarks
 - All the integrands are computed at the same time.
@@ -191,26 +193,28 @@ Returns a 7-uple, ordered from k=1 to k=7.
 - `s    ::Float64`: Reduced binding energy.
 - `R    ::Float64`: Squared reduced angular momentum j^2.
 """
-function fAC(theta::Float64,s::Float64,R::Float64)
+function _fAC(theta::Float64,s::Float64,R::Float64)
     xp,xm = xpm(R)
-    ym = xp/xm
+    ym    = xp/xm
     cshTh = cosh(theta)
-    fAC1 = cshTh^3/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)/sqrt(1.0-xm*cshTh^2)
-    fAC2 = cshTh^5/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)/(1.0-xm*cshTh^2)^(3/2)
-    fAC3 = cshTh^7/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)/sqrt(1.0-xm*cshTh^2)
-    fAC4 = cshTh/sqrt(ym-cshTh^2) * (1.0-s*xm*cshTh^2)^(3/2)/sqrt(1.0-xm*cshTh^2)
-    fAC5 = cshTh^3/sqrt(ym-cshTh^2) * (1.0-s*xm*cshTh^2)^(3/2)/(1.0-xm*cshTh^2)^(3/2)
-    fAC6 = cshTh^5/sqrt(ym-cshTh^2) * (1.0-s*xm*cshTh^2)^(3/2)/(1.0-xm*cshTh^2)^(5/2)
-    fAC7 = cshTh^7/sqrt(ym-cshTh^2) * (1.0-s*xm*cshTh^2)^(3/2)/(1.0-xm*cshTh^2)^(3/2)
+
+    fAC1 = cshTh^3/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)^(1)/sqrt(1.0-xm*cshTh^2)^(1)
+    fAC2 = cshTh^5/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)^(1)/sqrt(1.0-xm*cshTh^2)^(3)
+    fAC3 = cshTh^7/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)^(1)/sqrt(1.0-xm*cshTh^2)^(1)
+    fAC4 = cshTh  /sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)^(3)/sqrt(1.0-xm*cshTh^2)^(1)
+    fAC5 = cshTh^3/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)^(3)/sqrt(1.0-xm*cshTh^2)^(3)
+    fAC6 = cshTh^5/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)^(3)/sqrt(1.0-xm*cshTh^2)^(5)
+    fAC7 = cshTh^7/sqrt(ym-cshTh^2) * sqrt(1.0-s*xm*cshTh^2)^(3)/sqrt(1.0-xm*cshTh^2)^(3)
     return fAC1,fAC2,fAC3,fAC4,fAC5,fAC6,fAC7
 end
 
 """
-    C(s,R,nbC=500) 
+    _C_NR(s,R,nbC=500) 
 
 Computes all seven Ck integrals for 1<=k<=7 used for the computation of the non-resonance diffusion coefficients.
 Midpoint sampling rule is used for integration.
 Returns a 7-uple, ordered from k=1 to k=7.
+See `Conrad et Kulsrud (1978)`.
 
 # Remarks
 - All the integrands are computed at the same time.
@@ -221,57 +225,58 @@ Returns a 7-uple, ordered from k=1 to k=7.
 - `R  ::Float64`: Squared reduced angular momentum j^2.
 - `nbC::Float64`: Sampling number of the computed integrals. Set as 500 by default.
 """
-function C(s::Float64,R::Float64,nbC::Int64=500) 
+function _C_NR(s::Float64,R::Float64,nbC::Int64=500) 
     xp,xm = xpm(R)
     C1,C2,C3,C4,C5,C6,C7 = 0.0,0.0,0.0,0.0,0.0,0.0,0.0
+
     if xp>1/s
-	supC = beta(R,s)
-	stepC = supC/nbC
-	prefactorC = 4.0*stepC/pi
+        supC = _beta(R,s)
+        stepC = supC/nbC
+        prefactorC = 4.0*stepC/pi
     else
-	supA = eta(R)
-	supB = delta(R)
-	stepA = supA/nbC
-	stepB = supB/nbC
-	prefactorA = 4.0*stepA/pi
-	prefactorB = 4.0*stepB/pi
-	A1,A2,A3,A4,A5,A6,A7 = 0.0,0.0,0.0,0.0,0.0,0.0,0.0
+        supA = _eta(R)
+        supB = _delta(R)
+        stepA = supA/nbC
+        stepB = supB/nbC
+        prefactorA = 4.0*stepA/pi
+        prefactorB = 4.0*stepB/pi
+        A1,A2,A3,A4,A5,A6,A7 = 0.0,0.0,0.0,0.0,0.0,0.0,0.0
         B1,B2,B3,B4,B5,B6,B7 = 0.0,0.0,0.0,0.0,0.0,0.0,0.0
     end
     for jTheta=1:nbC
-	if xp>1/s
-	    thetaC = (jTheta-0.5)*stepC
-	    fAC1,fAC2,fAC3,fAC4,fAC5,fAC6,fAC7 = fAC(thetaC,s,R)
-	    C1 += fAC1
-	    C2 += fAC2
-	    C3 += fAC3
-	    C4 += fAC4
-	    C5 += fAC5
-	    C6 += fAC6
-	    C7 += fAC7
-	else
-	    thetaA = (jTheta-0.5)*stepA
-	    thetaB = (jTheta-0.5)*stepB
-	    fAC1,fAC2,fAC3,fAC4,fAC5,fAC6,fAC7 = fAC(thetaA,s,R)
-	    fB1,fB2,fB3,fB4,fB5,fB6,fB7 = fB(thetaB,s,R)
-	    A1 += fAC1
-	    A2 += fAC2
-	    A3 += fAC3
-	    A4 += fAC4
-	    A5 += fAC5
-	    A6 += fAC6
-	    A7 += fAC7
-	    B1 += fB1
-	    B2 += fB2
-	    B3 += fB3
-	    B4 += fB4
-	    B5 += fB5
-	    B6 += fB6
-	    B7 += fB7
-	end
+        if xp>1/s
+            thetaC = (jTheta-0.5)*stepC
+            fAC1,fAC2,fAC3,fAC4,fAC5,fAC6,fAC7 = _fAC(thetaC,s,R)
+            C1 += fAC1
+            C2 += fAC2
+            C3 += fAC3
+            C4 += fAC4
+            C5 += fAC5
+            C6 += fAC6
+            C7 += fAC7
+        else
+            thetaA = (jTheta-0.5)*stepA
+            thetaB = (jTheta-0.5)*stepB
+            fAC1,fAC2,fAC3,fAC4,fAC5,fAC6,fAC7 = _fAC(thetaA,s,R)
+            fB1,fB2,fB3,fB4,fB5,fB6,fB7 = _fB(thetaB,s,R)
+            A1 += fAC1
+            A2 += fAC2
+            A3 += fAC3
+            A4 += fAC4
+            A5 += fAC5
+            A6 += fAC6
+            A7 += fAC7
+            B1 += fB1
+            B2 += fB2
+            B3 += fB3
+            B4 += fB4
+            B5 += fB5
+            B6 += fB6
+            B7 += fB7
+        end
     end
     if xp>1/s
-	C1 *= prefactorC*xm
+        C1 *= prefactorC*xm
         C2 *= prefactorC*xm^2
         C3 *= prefactorC*xm^3
         C4 *= prefactorC
@@ -279,51 +284,53 @@ function C(s::Float64,R::Float64,nbC::Int64=500)
         C6 *= prefactorC*xm^2
         C7 *= prefactorC*xm^3
     else
-	A1 *= prefactorA*xm
+        A1 *= prefactorA*xm
         A2 *= prefactorA*xm^2
         A3 *= prefactorA*xm^3
         A4 *= prefactorA
         A5 *= prefactorA*xm
         A6 *= prefactorA*xm^2
         A7 *= prefactorA*xm^3
-	B1 *= prefactorB*xp
+        B1 *= prefactorB*xp
         B2 *= prefactorB*xp^2
         B3 *= prefactorB*xp^3
         B4 *= prefactorB
         B5 *= prefactorB*xp
         B6 *= prefactorB*xp^2
         B7 *= prefactorB*xp^3
-	C1 = A1 + B1
-	C2 = A2 + B2
-	C3 = A3 + B3
-	C4 = A4 + B4
-	C5 = A5 + B5
-	C6 = A6 + B6
-	C7 = A7 + B7
+        C1 = A1 + B1
+        C2 = A2 + B2
+        C3 = A3 + B3
+        C4 = A4 + B4
+        C5 = A5 + B5
+        C6 = A6 + B6
+        C7 = A7 + B7
     end
     return C1,C2,C3,C4,C5,C6,C7
 end
 
 """
-    F_0(E,iBath)
+    _F_NR_0(E,iBath)
     
 Analytic evaluation of the F0 integral, at binding energy E and for the family indexed by iBath in the source file.
+See `Conrad et Kulsrud (1978)`.
 """
-function F_0(E::Float64,iBath::Int64)
+function _F_NR_0(E::Float64,iBath::Int64)
     a0 = taba0Bath[iBath]
     E0 = E_bind(a0)
-    NBar = tabNbarBath[iBath]
+    NBar  = tabNbarBath[iBath]
     gamma = tabgammaBath[iBath]
-    gam = Gam(iBath)
-    return 4.0*pi*gam* a0 * 1.0/prefac_J(E)*NBar/(gamma-0.5) * (E0/E)^(3.0-gamma)
+    gamma_pref = gamma_prefactor(iBath)
+    return 4.0*pi*gamma_pref* a0 * 1.0/prefac_J(E)*NBar/(gamma-0.5) * (E0/E)^(3.0-gamma)
 end
 
 """
-    F(E,R,iBath,nbC=500) 
+    _F_NR(E,R,iBath,nbC=500) 
 
 Computes all seven Fk integrals for 1<=k<=7 used for the computation of the non-resonance diffusion coefficients.
 Midpoint sampling rule is used for integration.
 Returns a 7-uple, ordered from k=1 to k=7.
+See `Conrad et Kulsrud (1978)`.
 
 # Remarks
 - All the integrands are computed at the same time.
@@ -335,17 +342,17 @@ Returns a 7-uple, ordered from k=1 to k=7.
 - `iBath::Float64`: Index in the source file of the considered family.
 - `nbC  ::Float64`: Sampling number of the computed integrals. Set as 500 by default.
 """
-function F(E::Float64,R::Float64,iBath::Int64,nbF::Int64=500) 
+function _F_NR(E::Float64,R::Float64,iBath::Int64,nbF::Int64=500) 
     xp,xm = xpm(R)
     inf = E
     sup = E/xm
     step = E/nbF * (1.0/xm - 1.0)
     F1,F2,F3,F4,F5,F6,F7 = 0.0,0.0,0.0,0.0,0.0,0.0,0.0
     for kEnergy=1:nbF
-	Ep = inf+(kEnergy-0.5)*step
-	st = s(Ep,E)
-	C1,C2,C3,C4,C5,C6,C7 = C(st,R)
-	DF = DF_E(Ep,iBath)
+        Ep = inf+(kEnergy-0.5)*step
+        s  = inverse_reduced_E_bind(Ep,E)
+        C1,C2,C3,C4,C5,C6,C7 = _C_NR(s,R)
+        DF = DF_E(Ep,iBath)
         F1 += DF*C1
         F2 += DF*C2
         F3 += DF*C3
@@ -354,7 +361,7 @@ function F(E::Float64,R::Float64,iBath::Int64,nbF::Int64=500)
         F6 += DF*C6
         F7 += DF*C7
     end
-    prefactor = 4.0*pi*Gam(iBath)*step
+    prefactor = 4.0*pi*gamma_prefactor(iBath)*step
     F1 *= prefactor
     F2 *= prefactor
     F3 *= prefactor
@@ -383,8 +390,8 @@ Returns the 5-uple `(DE, DEE/E, DJ/Jc, DJJ/Jc^2, DEJ/Jc)` for the family indexed
 """
 function DNR_EJ(E::Float64,j::Float64,iBath::Int64,m_test::Float64=0.0)
     R = j^2
-    F1,F2,F3,F4,F5,F6,F7 = F(E,R,iBath)
-    F0 = F_0(E,iBath)
+    F1,F2,F3,F4,F5,F6,F7 = _F_NR(E,R,iBath)
+    F0 = _F_NR_0(E,iBath)
     m = tabmBath[iBath]
     D_E = -F0 + m_test/m * F1
     D_EE_over_E = 4/3*(F0 + F4)
@@ -407,7 +414,7 @@ function DNR_J_red(a::Float64,j::Float64)
     res = 0.0
     E = E_bind(a)
     for iBath=1:nbBath
-	res += DNR_EJ(E,j,iBath)[3]
+        res += DNR_EJ(E,j,iBath)[3]
     end
     return res
 end
@@ -425,7 +432,7 @@ function DNR_JJ_red(a::Float64,j::Float64)
     res = 0.0
     E = E_bind(a)
     for iBath=1:nbBath
-	res += DNR_EJ(E,j,iBath)[4]
+        res += DNR_EJ(E,j,iBath)[4]
     end
     return res
 end
@@ -466,12 +473,12 @@ Returns the 5-uple `(Da, Daa, Dj, Djj, Daj)`.
 function DNR_aj(a::Float64,j::Float64) #Wrapped function to give total D_NR_jj
     D_a,D_aa,D_j,D_jj,D_aj = 0.0,0.0,0.0,0.0,0.0
     for iBath=1:nbBath
-	D = DNR_red(a,j,iBath)
-	D_a += D[1]
-	D_aa += D[2]
-	D_j += D[3]
-	D_jj += D[4]
-	D_aj += D[5]
+        Di_a,Di_aa,Di_j,Di_jj,Di_aj = DNR_red(a,j,iBath)
+        D_a  += Di_a
+        D_aa += Di_aa
+        D_j  += Di_j
+        D_jj += Di_jj
+        D_aj += Di_aj
     end
     return D_a,D_aa,D_j,D_jj,D_aj
 end
@@ -500,45 +507,4 @@ Total non-resonant reduced diffusion coefficient Dj in (a,j) coordinates and Bar
 """
 function DNR_j(a::Float64,j::Float64) 
     return DNR_aj(a,j)[3]
-end
-
-##################################################
-#Checks the non-resonant fluctuation-dissipation relation in J.
-##################################################
-
-"""
-    ReducedDriftParameter(a,j,eps=0.0001)  
-
-Returns `A/Jc` where `A` is the drift parameter. This is supposed to vanish in theory for the fluctuation-dissipation relation to be satisfied.
-Uses finite differentiation `f'(x) = (f(x+eps)-f(x-eps))/(2*eps)`.
-
-# Arguments
-- `a  ::Float64`: Semi-major axis.
-- `j  ::Float64`: Reduced angular momentum `j=J/Jc`.
-- `eps::Float64`: Precision in the finite difference used for differentation.
-"""
-function ReducedDriftParameter(a::Float64,j::Float64,eps::Float64=0.0001)
-    Dp = DNR_JJ_red(a,j+eps)
-    Dm = DNR_JJ_red(a,j-eps)
-    numerator = (j + eps)*Dp - (j - eps)*Dm
-    denumerator = 2.0*j*2.0*eps
-    LHS = numerator/denumerator #Left handside of equation
-    RHS = DNR_J_red(a,j)
-    return LHS-RHS
-end
-
-"""
-    TestDrift(a,j) 
-
-Returns `A/DNRJJ` where `A` is the drift parameter and DNRJJ the non-resonant diffusion coefficient.
-Must be very close to 0 in practise to be able to neglect the drift parameter.
-
-# Arguments
-- `a  ::Float64`: Semi-major axis.
-- `j  ::Float64`: Reduced angular momentum `j=J/Jc`.
-"""
-function TestDrift(a::Float64,j::Float64)
-    A_red = ReducedDriftParameter(a,j)
-    DNR_jj = DNR_JJ_red(a,j)
-    return A_red/DNR_jj
 end

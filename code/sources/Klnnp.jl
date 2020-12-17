@@ -26,18 +26,18 @@ Using `StaticArrays` for better performances.
 const tabcosnf_Klnnp = SMatrix{lmax,nbK,Float64}([cos(n*tabf_Klnnp[k]) for n=1:lmax, k=1:nbK])
 
 """
-    Table_K
+    IntTable_K
     
 `IntTable` structure used in the computation of the geometric factor Klnnp.
 Use `Table_create!()` to initialize.
 """
-const Table_K = Table_create!()
+const IntTable_K_serial = IntTable_create!()
 
 ##################################################
 # Computing the interaction coefficients Klnnp
 ##################################################
 """
-    Klnnp(l,n,np,a,jt,ap,jp,Table_K_arg=Table_K)
+    Klnnp(l,n,np,a,jt,ap,jp,IntTable_K=IntTable_K_serial)
 
 Geometric factor K_nn'(a,j,a',j') involved in the computation of the scalar resonant diffusion coefficient DRR_jj.
 
@@ -52,42 +52,51 @@ Geometric factor K_nn'(a,j,a',j') involved in the computation of the scalar reso
 - `jt  ::Float64`: reduced angular momentum of the first orbit.
 - `ap  ::Float64`: semi-major axis of the second orbit.
 - `jp  ::Float64`: reduced angular momentum of the second orbit.
-- `Table_K_arg=Table_K:: IntTable`: Structure which contains the tables needed for the computation of this integral.
+- `IntTable_K=IntTable_K_serial:: IntTable`: Structure which contains the tables needed for the computation of this integral.
 """
-function Klnnp(l::Int64,n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,Table_K_arg=Table_K)
+function Klnnp(l::Int64,n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,IntTable_K::IntTable=IntTable_K_serial)
+
+    tabw  = IntTable_K.tabw
+    tabg  = IntTable_K.tabg
+    tabgp = IntTable_K.tabgp
+    tabR  = IntTable_K.tabR
+    tabRp = IntTable_K.tabRp
+    tabdeltaP = IntTable_K.tabdeltaP
+    tabdeltaQ = IntTable_K.tabdeltaQ
+    
     #####
     # Computing tabdeltaP and tabdeltaQ
     for j=1:nbK
         #####
         # Computing tabdeltaP
         x = 0.0
-        for i=(Table_K_arg.tabw[j]+1):(Table_K_arg.tabw[j+1]) # ATTENTION, indices are shifted by one
-            x += Table_K_arg.tabg[i]*(Table_K_arg.tabR[i]/Table_K_arg.tabRp[j])^(l)/(Table_K_arg.tabRp[j]) # Adding the contribution
+        for i=(tabw[j]+1):(tabw[j+1]) # ATTENTION, indices are shifted by one
+            x += tabg[i]*(tabR[i]/tabRp[j])^(l)/(tabRp[j]) # Adding the contribution
         end
-        Table_K_arg.tabdeltaP[j] = x # Updating tabdeltaP
+        tabdeltaP[j] = x # Updating tabdeltaP
         #####
         # Computing tabdeltaQ
         x = 0.0
-        for i=(Table_K_arg.tabw[j+1]+1):(Table_K_arg.tabw[j+2]) # ATTENTION, indices are shifted by one
-            x += Table_K_arg.tabg[i]*(Table_K_arg.tabRp[j]/Table_K_arg.tabR[i])^(l)/(Table_K_arg.tabR[i]) # Adding the contribution
+        for i=(tabw[j+1]+1):(tabw[j+2]) # ATTENTION, indices are shifted by one
+            x += tabg[i]*(tabRp[j]/tabR[i])^(l)/(tabR[i]) # Adding the contribution
         end
-        Table_K_arg.tabdeltaQ[j] = x # Updating tabdeltaQ
+        tabdeltaQ[j] = x # Updating tabdeltaQ
     end
     #####
     # Computing the contributions from the sum P
-    x = Table_K_arg.tabdeltaP[1] # Initial value of tabP[1]
-    sumP = Table_K_arg.tabgp[1]*x # Initialising the contribution from P with the value of tabP[1]
+    x = tabdeltaP[1] # Initial value of tabP[1]
+    sumP = tabgp[1]*x # Initialising the contribution from P with the value of tabP[1]
     for j=1:(nbK-1) # Loop over the samples
-        x = (Table_K_arg.tabRp[j]/Table_K_arg.tabRp[j+1])^(l+1)*x + Table_K_arg.tabdeltaP[j+1] # Computing the value of P[j+1]
-        sumP += Table_K_arg.tabgp[j+1]*x # Updating the total contribution from P with P[j+1]
+        x = (tabRp[j]/tabRp[j+1])^(l+1)*x + tabdeltaP[j+1] # Computing the value of P[j+1]
+        sumP += tabgp[j+1]*x # Updating the total contribution from P with P[j+1]
     end
     #####
     # Computing the contributions from the sum Q
-    x = Table_K_arg.tabdeltaQ[nbK] # Initial value of tabQ[1]
-    sumQ = Table_K_arg.tabgp[nbK]*x # Initialising the contribution from Q with the value of tabQ[nbK]
+    x = tabdeltaQ[nbK] # Initial value of tabQ[1]
+    sumQ = tabgp[nbK]*x # Initialising the contribution from Q with the value of tabQ[nbK]
     for j=nbK:-1:2 # Loop over the samples. ATTENTION, this is a decreasing recurrence
-        x = (Table_K_arg.tabRp[j-1]/Table_K_arg.tabRp[j])^(l)*x + Table_K_arg.tabdeltaQ[j-1] # Computing the value of Q[j-1]
-        sumQ += Table_K_arg.tabgp[j-1]*x # Updating the total contribution from Q with Q[j-1]
+        x = (tabRp[j-1]/tabRp[j])^(l)*x + tabdeltaQ[j-1] # Computing the value of Q[j-1]
+        sumQ += tabgp[j-1]*x # Updating the total contribution from Q with Q[j-1]
     end
     #####
     return (sumP+sumQ)/(nbK^(2)) # Computing the total contribution from both P and Q
@@ -99,7 +108,7 @@ end
 # Computing the wrapped interaction coefficients
 ##################################################
 """
-    AnnpSQ(l,n,np,a,jt,ap,jp,Table_K_arg=Table_K)
+    AnnpSQ(l,n,np,a,jt,ap,jp,IntTable_K=IntTable_K_serial)
 
 Coefficient |A_nnp|^2 at (a,jt,a',j') involved in the computation of the scalar resonant diffusion coefficient DRR_jj.
 
@@ -114,19 +123,19 @@ Coefficient |A_nnp|^2 at (a,jt,a',j') involved in the computation of the scalar 
 - `jt  ::Float64`: reduced angular momentum of the first orbit.
 - `ap  ::Float64`: semi-major axis of the second orbit.
 - `jp  ::Float64`: reduced angular momentum of the second orbit.
-- `Table_K_arg=Table_K:: IntTable`: Structure which contains the tables needed for the computation of this integral.
+- `IntTable_K=IntTable_K_serial:: IntTable`: Structure which contains the tables needed for the computation of this integral.
 """
-function AnnpSQ(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,Table_K_arg=Table_K)
+function AnnpSQ(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,IntTable_K::IntTable=IntTable_K_serial)
     # Getting rid of the cases where the coefficients is necessarily zero
     if (abs(n) > lmax || abs(np) > lmax || mod(n-np,2) != 0)
         return 0.0
     else # In that case the result is non-zero
         res = 0.0 # Initialising the result
         #####
-        Table_init!(Table_K_arg,n,np,a,j,ap,jp) # Updating tabR, tabRp, tabg, tabgp, and tabw for the respective orders of the particles
+        IntTable_init!(IntTable_K,n,np,a,j,ap,jp) # Updating tabR, tabRp, tabg, tabgp, and tabw for the respective orders of the particles
         #####
         for l = max(abs(n),abs(np)):2:lmax # Loop over the l that have non-vanishing contributions !! ATTENTION, the step of the loop is 2
-            res += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(Klnnp(l,n,np,a,j,ap,jp,Table_K_arg))^(2) # Adding the contribution from (l,n,np) !! ATTENTION, not to forget the squared
+            res += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(Klnnp(l,n,np,a,j,ap,jp,IntTable_K))^(2) # Adding the contribution from (l,n,np) !! ATTENTION, not to forget the squared
         end
         #####
         res *= 16.0*pi^(2) # Putting the prefactor

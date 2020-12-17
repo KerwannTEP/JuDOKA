@@ -10,8 +10,8 @@ using HDF5 # To have access to .hf5 files
 ########################################
 include("../sources/Main.jl") # Loading the main code
 ########################################
-jminMeasure, jmaxMeasure = 0.3,0.999 # Range in j where the Djj are computed
-nbjMeasure = 500 # Number of j for which the Djj are computed
+jminMeasure, jmaxMeasure = 0.01,0.999 # Range in j where the Djj are computed
+nbjMeasure = 30 # Number of j for which the Djj are computed
 tabjMeasure = exp.(range(log(jminMeasure),length=nbjMeasure,log(jmaxMeasure)))
 
 const tabDRRjj = zeros(Float64,nbjMeasure) # Values of the DRR_jj coefficients on the (a,j)-grid
@@ -26,10 +26,10 @@ function tabDRRjj!()
             if jMeasure<jlc(aMeasure) # Do not compute DRR within the loss cone
                 tabDRRjj[ij] = 0.0
             else
-                tabSMARes_parallel = zeros(Float64,4) # Container of tabSMARes for the current thread 
-                Table_K_parallel = Table_create!()
+                tabSMARes_parallel = zeros(Float64,2,2) # Container of tabSMARes for the current thread 
+                IntTable_K_parallel = IntTable_create!()
                 
-                DRR = DRR_jj(aMeasure,jMeasure,Table_K_parallel,tabSMARes_parallel)
+                DRR = DRR_jj(aMeasure,jMeasure,IntTable_K_parallel,tabSMARes_parallel)
                 tabDRRjj[ij] = DRR # Computing DRR_jj with the thread's containers
             end
         end
@@ -71,7 +71,7 @@ function tabDNRjj!()
 end
 
 ########################################
-namefile = "../data/Dump_Diffusion_Coefficients_Cut_TH.hf5"
+namefile = "../data/Dump_Diffusion_Coefficients_Cut.hf5"
 ########################################
 # Function that writes to .hf5 files
 ########################################

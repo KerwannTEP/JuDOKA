@@ -1,42 +1,42 @@
 """
-    Table_dKdJ
+    IntTable_dKdJ
     
 `IntTable` structure used in the computation of the j-gradient of the geometric factor Klnnp.
 Use `Table_create!()` to initialize.
 """
-const Table_dKdJ = Table_create!()
+const IntTable_dKdJ_serial = IntTable_create!()
 
 """
-    Table_dKdJp
+    IntTable_dKdJp
     
 `IntTable` structure used in the computation of the jp-gradient of the geometric factor Klnnp.
 Use `Table_create!()` to initialize.
 """
-const Table_dKdJp = Table_create!()
+const IntTable_dKdJp_serial = IntTable_create!()
 
 ##################################################
 # Functions used to compute the integrands of I1 and I2
 ##################################################
 """
-    psi(j,cosf)
+    reduced_rad(j,cosf)
     
 Radius over semi-major axis, at a given angular momentum and the cosine of a mean anomaly f.
 """
-function psi(j::Float64,cosf::Float64) 
+function reduced_rad(j::Float64,cosf::Float64) 
     # Reduced radius r/a
     return j^2/(1.0+sqrt(1.0-j^2)*cosf)
 end
 
 """
-    dpsidj(j,cosf)
+    Dreduced_rad(j,cosf)
 
 j-derivative of the radius over semi-major axis, at a given angular momentum and the cosine of a mean anomaly f.
 """
-function dpsidj(j::Float64,cosf::Float64) 
+function Dreduced_rad(j::Float64,cosf::Float64) 
     # j-Derivative psi
-    exc = sqrt(1.0-j^2)
-    numerator = 2.0*j*(1+exc*cosf) + j^3/exc * cosf
-    denumerator = (1.0 + exc*cosf)^2
+    ecc = sqrt(1.0-j^2)
+    numerator   = 2.0*j*(1+ecc*cosf) + j^3/ecc * cosf
+    denumerator = (1.0 + ecc*cosf)^2
     return numerator/denumerator
 end
 
@@ -47,71 +47,14 @@ j-derivative of the Jacobian, at a given angular momentum and the cosine of a tr
 """
 function ddMdfdj(j::Float64,cosf::Float64) 
     # j-Derivative of the Jacobian
-    return (2.0*j*dpsidj(j,cosf)*psi(j,cosf) - psi(j,cosf)^2)/(j^2)
-end
-
-"""
-    phi(l,a,j,cosf,rp)
-
-Computes the min(r,rp)^(l)/max(r,rp)^(l+1) part of the integrand of the geometric factor K_nn'(a,j,a',j').
-
-# Arguments
-- `l   ::Int64`  : mode of the multipole expansion.
-- `a   ::Float64`: semi-major axis of the first orbit.
-- `j   ::Float64`: reduced angular momentum of the first orbit.
-- `cosf::Float64`: cosine of the true anomaly of the first orbit.
-- `rp  ::Float64`: radius of the second orbit.
-"""
-function phi(l::Int64,a::Float64,j::Float64,cosf::Float64,rp::Float64) 
-    # Min/max function
-    r = a*psi(j,cosf)
-    return min(r,rp)^(l)/max(r,rp)^(l+1)
-end
-
-"""
-    eta(l,a,j,cosf,rp)
-
-Function used in the computation of dK/dj which returns l if r<r' and -(l+1) if r>r'.
-
-# Arguments
-- `l   ::Int64`  : mode of the multipole expansion.
-- `a   ::Float64`: semi-major axis of the first orbit.
-- `j   ::Float64`: reduced angular momentum of the first orbit.
-- `cosf::Float64`: cosine of the true anomaly of the first orbit.
-- `rp  ::Float64`: radius of the second orbit.
-"""
-function eta(l::Int64,a::Float64,j::Float64,cosf::Float64,rp::Float64) 
-    # Eta function used in I2
-    r = a*psi(j,cosf)
-    if r < rp
-        return l 
-    else
-        return -(l+1) 
-    end
-end
-
-"""
-    zeta(l,a,j,cosf,rp)
-
-Integrand of the derivative of the integrand of the geometric factor K_nn'(a,j,a',j').
-
-# Arguments
-- `l   ::Int64`  : mode of the multipole expansion.
-- `a   ::Float64`: semi-major axis of the first orbit.
-- `j   ::Float64`: reduced angular momentum of the first orbit.
-- `cosf::Float64`: cosine of the true anomaly of the first orbit.
-- `rp  ::Float64`: radius of the second orbit.
-"""
-function zeta(l::Int64,a::Float64,j::Float64,cosf::Float64,rp::Float64) 
-    # Function used in the integrand
-    return ddMdfdj(j,cosf) + (psi(j,cosf))/j *eta(l,a,j,cosf,rp)*dpsidj(j,cosf)
+    return (2.0*j*Dreduced_rad(j,cosf)*reduced_rad(j,cosf) - reduced_rad(j,cosf)^2)/(j^2)
 end
 
 ##################################################
 # Computing the geometric factor Klnnp and its derivatives.
 ##################################################
 """
-    dKlnnpdj(l,n,np,a,jt,ap,jp,Table_dKdJ_arg=Table_dKdJ)
+    dKlnnpdj(l,n,np,a,jt,ap,jp,IntTable_dKdJ=IntTable_dKdJ_serial)
 
 j-derivative (with respect to the first orbit) of the geometric factor K_nn'(a,j,a',j').
 
@@ -123,44 +66,55 @@ j-derivative (with respect to the first orbit) of the geometric factor K_nn'(a,j
 - `jt  ::Float64`: reduced angular momentum of the first orbit.
 - `ap  ::Float64`: semi-major axis of the second orbit.
 - `jp  ::Float64`: reduced angular momentum of the second orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of this integral.
+- `IntTable_dKdJ :: IntTable`: Structure which contains the tables needed for the computation of this integral.
 """
-function dKlnnpdj(l::Int64,n::Int64,np::Int64,a::Float64,jt::Float64,ap::Float64,jp::Float64,Table_dKdJ_arg=Table_dKdJ)
+function dKlnnpdj(l::Int64,n::Int64,np::Int64,a::Float64,jt::Float64,ap::Float64,jp::Float64,
+                  IntTable_dKdJ::IntTable=IntTable_dKdJ_serial)
+
+    tabw  = IntTable_dKdJ.tabw
+    tabgp = IntTable_dKdJ.tabgp
+    tabh1 = IntTable_dKdJ.tabh1
+    tabh2 = IntTable_dKdJ.tabh2
+    tabR  = IntTable_dKdJ.tabR
+    tabRp = IntTable_dKdJ.tabRp
+    tabdeltaP = IntTable_dKdJ.tabdeltaP
+    tabdeltaQ = IntTable_dKdJ.tabdeltaQ
+
     # Computing tabdeltadP and tabdeltadQ
     for j=1:nbK
         # Computing tabdeltadP
         x = 0.0
-        for i=(Table_dKdJ_arg.tabw[j]+1):(Table_dKdJ_arg.tabw[j+1]) # ATTENTION, indices are shifted by one
-            x += (Table_dKdJ_arg.tabh1[i]+l*Table_dKdJ_arg.tabh2[i])*(Table_dKdJ_arg.tabR[i]/Table_dKdJ_arg.tabRp[j])^(l)/(Table_dKdJ_arg.tabRp[j]) # Adding the contribution
+        for i=(tabw[j]+1):(tabw[j+1]) # ATTENTION, indices are shifted by one
+            x += (tabh1[i]+l*tabh2[i])*(tabR[i]/tabRp[j])^(l)/(tabRp[j]) # Adding the contribution
         end
 
-        Table_dKdJ_arg.tabdeltaP[j] = x # Updating tabdeltadP
+        tabdeltaP[j] = x # Updating tabdeltadP
         # Computing tabdeltadQ
         x = 0.0
-        for i=(Table_dKdJ_arg.tabw[j+1]+1):(Table_dKdJ_arg.tabw[j+2]) # ATTENTION, indices are shifted by one
-            x += (Table_dKdJ_arg.tabh1[i]-(l+1)*Table_dKdJ_arg.tabh2[i])*(Table_dKdJ_arg.tabRp[j]/Table_dKdJ_arg.tabR[i])^(l)/(Table_dKdJ_arg.tabR[i]) # Adding the contribution
+        for i=(tabw[j+1]+1):(tabw[j+2]) # ATTENTION, indices are shifted by one
+            x += (tabh1[i]-(l+1)*tabh2[i])*(tabRp[j]/tabR[i])^(l)/(tabR[i]) # Adding the contribution
         end
-        Table_dKdJ_arg.tabdeltaQ[j] = x # Updating tabdeltadQ
+        tabdeltaQ[j] = x # Updating tabdeltadQ
     end
     # Computing the contributions from the sum dP
-    x = Table_dKdJ_arg.tabdeltaP[1] # Initial value of tabdP[1]
-    sumP = Table_dKdJ_arg.tabgp[1]*x # Initialising the contribution from dP with the value of tabdP[1]
+    x = tabdeltaP[1] # Initial value of tabdP[1]
+    sumP = tabgp[1]*x # Initialising the contribution from dP with the value of tabdP[1]
     for j=1:(nbK-1) # Loop over the samples
-        x = (Table_dKdJ_arg.tabRp[j]/Table_dKdJ_arg.tabRp[j+1])^(l+1)*x + Table_dKdJ_arg.tabdeltaP[j+1] # Computing the value of dP[j+1]
-        sumP += Table_dKdJ_arg.tabgp[j+1]*x # Updating the total contribution from P with dP[j+1]
+        x = (tabRp[j]/tabRp[j+1])^(l+1)*x + tabdeltaP[j+1] # Computing the value of dP[j+1]
+        sumP += tabgp[j+1]*x # Updating the total contribution from P with dP[j+1]
     end
     # Computing the contributions from the sum dQ
-    x = Table_dKdJ_arg.tabdeltaQ[nbK] # Initial value of tabdQ[1]
-    sumQ = Table_dKdJ_arg.tabgp[nbK]*x # Initialising the contribution from dQ with the value of tabdQ[nbK]
+    x = tabdeltaQ[nbK] # Initial value of tabdQ[1]
+    sumQ = tabgp[nbK]*x # Initialising the contribution from dQ with the value of tabdQ[nbK]
     for j=nbK:-1:2 # Loop over the samples. ATTENTION, this is a decreasing recurrence
-        x = (Table_dKdJ_arg.tabRp[j-1]/Table_dKdJ_arg.tabRp[j])^(l)*x + Table_dKdJ_arg.tabdeltaQ[j-1] # Computing the value of dQ[j-1]
-        sumQ += Table_dKdJ_arg.tabgp[j-1]*x # Updating the total contribution from dQ with dQ[j-1]
+        x = (tabRp[j-1]/tabRp[j])^(l)*x + tabdeltaQ[j-1] # Computing the value of dQ[j-1]
+        sumQ += tabgp[j-1]*x # Updating the total contribution from dQ with dQ[j-1]
     end
     return (sumP+sumQ)/(nbK^(2)) # Computing the total contribution from both dP1 and dQ1
 end
 
 """
-    dKlnnpdjp(l,n,np,a,jt,ap,jp,Table_dKdJ_arg=Table_dKdJp)
+    dKlnnpdjp(l,n,np,a,jt,ap,jp,IntTable_dKdJ=IntTable_dKdJp_serial)
 
 jp-derivative (with respect to the second orbit) of the geometric factor K_nn'(a,j,a',j').
 Uses the relation dK/dj'(n,n',a,j,a',j') = dK/dj(n',n,a',j',a,j).
@@ -173,14 +127,16 @@ Uses the relation dK/dj'(n,n',a,j,a',j') = dK/dj(n',n,a',j',a,j).
 - `jt  ::Float64`: reduced angular momentum of the first orbit.
 - `ap  ::Float64`: semi-major axis of the second orbit.
 - `jp  ::Float64`: reduced angular momentum of the second orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of this integral.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of this integral.
 """
-function dKlnnpdjp(l::Int64,n::Int64,np::Int64,a::Float64,jt::Float64,ap::Float64,jp::Float64,Table_dKdJ_arg=Table_dKdJp)
-    return dKlnnpdj(l,np,n,ap,jp,a,jt,Table_dKdJ_arg)
+function dKlnnpdjp(l::Int64,n::Int64,np::Int64,a::Float64,jt::Float64,ap::Float64,jp::Float64,
+                   IntTable_dKdJ::IntTable=IntTable_dKdJp_serial)
+
+    return dKlnnpdj(l,np,n,ap,jp,a,jt,IntTable_dKdJ)
 end
 
 """
-    A_dAnnpSQ(n,np,a,jt,ap,jp,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    A_dAnnpSQ(n,np,a,jt,ap,jp,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial)
 
 Computation of the coefficient AnnpSQ at (a,jt,a',j') and of its derivatives with respect to j (first orbit) and jp (second orbit).
 Returns a triplet (AnnpSQ, dAnnpSQ/dj, dAnnpSQ/djp) in this order.
@@ -192,35 +148,43 @@ Returns a triplet (AnnpSQ, dAnnpSQ/dj, dAnnpSQ/djp) in this order.
 - `jt  ::Float64`: reduced angular momentum of the first orbit.
 - `ap  ::Float64`: semi-major axis of the second orbit.
 - `jp  ::Float64`: reduced angular momentum of the second orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function A_dAnnpSQ(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp)
+function A_dAnnpSQ(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,
+                   IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,IntTable_dKdJp::IntTable=IntTable_dKdJp_serial)
+
     # Getting rid of the cases where the coefficients is necessarily zero
     if (abs(n) > lmax || abs(np) > lmax || mod(n-np,2) != 0)
         return 0.0
     else # In that case the result is non-zero
-        dAp = 0.0
-        dA = 0.0 # Initialising the result
-        A = 0.0
+
+        # Initialising the result
+        A     = 0.0
+        dAdj  = 0.0
+        dAdjp = 0.0
         
-        Table_init!(Table_dKdJ_arg,n,np,a,j,ap,jp)
-        Table_init!(Table_dKdJp_arg,np,n,ap,jp,a,j)
+        IntTable_init!(IntTable_dKdJ ,n ,np,a ,j ,ap,jp)
+        IntTable_init!(IntTable_dKdJp,np,n ,ap,jp,a ,j)
         
         for l = max(abs(n),abs(np)):2:lmax # Loop over the l that have non-vanishing contributions !! ATTENTION, the step of the loop is 2
-            K = Klnnp(l,n,np,a,j,ap,jp,Table_dKdJ_arg)
+            K   =     Klnnp(l,n,np,a,j,ap,jp,IntTable_dKdJ)
+            dK  =  dKlnnpdj(l,n,np,a,j,ap,jp,IntTable_dKdJ)
+            dKp = dKlnnpdjp(l,n,np,a,j,ap,jp,IntTable_dKdJp)
             sgn = sign(K)
-            dKp = dKlnnpdjp(l,n,np,a,j,ap,jp,Table_dKdJp_arg)
-            dK = dKlnnpdj(l,n,np,a,j,ap,jp,Table_dKdJ_arg)
-            dAp += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(abs(K)*sgn*dKp) # Adding the contribution from (l,n,np) !! ATTENTION, not to forget the squared
-            dA += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(abs(K)*sgn*dK) # Adding the contribution from (l,n,np) !! ATTENTION, not to forget the squared
-            A += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(K)^2 # Adding the contribution from (l,n,np) !! ATTENTION, not to forget the squared
+            
+            A     += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(K)^2 
+            dAdj  += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(abs(K)*sgn*dK) 
+            dAdjp += (ylnSQ(l,n)*ylnSQ(l,np))/((2.0*l+1.0)^(3))*(abs(K)*sgn*dKp) 
         end
-        dAp *= 32.0*pi^(2)
-        dA *= 32.0*pi^(2) # Putting the prefactor
-        A *= 16.0*pi^(2)
-        return A, dA, dAp # Output
+
+        # Putting the prefactor
+        A     *= 16.0*pi^(2)
+        dAdj  *= 32.0*pi^(2)
+        dAdjp *= 32.0*pi^(2)
+        
+        return A, dAdj, dAdjp # Output
     end
 end
 
@@ -229,10 +193,10 @@ end
 ##################################################
 
 """
-    dintDJJnn(n,np,a,j,ap,jp,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    dintDJJnn(n,np,a,j,ap,jp,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial)
 
 Computation of the integrand of DRR_JJnn, contribution of the (n,n') resonance number to DRR, and its partial derivatives with respect to j (first orbit) and jp (second orbit).
-Returns a triplet (dInt/dj, dInt/djp, Int) in this order, where Int is the integrand of DRR_JJnn.
+Returns a triplet (Int,dInt/dj, dInt/djp) in this order, where Int is the integrand of DRR_JJnn.
 
 # Arguments
 - `n   ::Int64`  : first resonance number of the orbit.
@@ -241,24 +205,30 @@ Returns a triplet (dInt/dj, dInt/djp, Int) in this order, where Int is the integ
 - `j   ::Float64`: reduced angular momentum of the first orbit.
 - `ap  ::Float64`: semi-major axis of the second orbit.
 - `jp  ::Float64`: reduced angular momentum of the second orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function dintDJJnn(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp)
+function dintDJJnn(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,
+                   IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,IntTable_dKdJp::IntTable=IntTable_dKdJp_serial)
+
     dnup = dnupdj(ap,jp)
-    AdAdAp = A_dAnnpSQ(n,np,a,j,ap,jp,Table_dKdJ_arg,Table_dKdJp_arg)
+    A, dAdj, dAdjp = A_dAnnpSQ(n,np,a,j,ap,jp,IntTable_dKdJ,IntTable_dKdJp)
     Ftot = FtotBath(ap,jp)
-    # term dj'
-    term1djp = NBathTot(ap) * (dfjBathdj(ap,jp)*abs(dnup) - fjBath(ap,jp)*d2nupdj2(ap,jp)*sign(dnup) )/(dnup)^2  * AdAdAp[1]
-    term2djp = Ftot/abs(dnup) * AdAdAp[3]
-    djp = term1djp + term2djp
-    # term dj
     cst = Ftot/abs(dnup)
-    dj = cst * AdAdAp[2]
-    # term A
-    termA = cst * AdAdAp[1]
-    return dj, djp, termA
+
+    # Integrand of DRR_JJnn
+    Integrand = cst * A
+
+    # j-gradient of the integrand of DRR_JJnn
+    dIntdj = cst * dAdj
+
+    # j'-gradient of the integrand of DRR_JJnn
+    term1djp = NBathTot(ap) * (dfjBathdj(ap,jp)*abs(dnup) - fjBath(ap,jp)*d2nupdj2(ap,jp)*sign(dnup) )/(dnup)^2  * A
+    term2djp = Ftot/abs(dnup) * dAdjp
+    dIntdjp = term1djp + term2djp
+   
+    return Integrand, dIntdj, dIntdjp
 end
 
 """
@@ -281,10 +251,10 @@ function djpdj(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64)
 end
 
 """
-    DintDJJnnDj(n,np,a,j,ap,jp,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    DintDJJnnDj(n,np,a,j,ap,jp,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial)
 
 Computation of the integrand of DRR_JJnn, contribution of the (n,n') resonance number to DRR, and its total j-derivative.
-Returns a couple (DInt/dj, Int) in this order, where Int is the integrand of DRR_JJnn.
+Returns a couple (Int, DInt/Dj) in this order, where Int is the integrand of DRR_JJnn.
 
 # Arguments
 - `n   ::Int64`  : first resonance number of the orbit.
@@ -293,18 +263,20 @@ Returns a couple (DInt/dj, Int) in this order, where Int is the integrand of DRR
 - `j   ::Float64`: reduced angular momentum of the first orbit.
 - `ap  ::Float64`: semi-major axis of the second orbit.
 - `jp  ::Float64`: reduced angular momentum of the second orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function DintDJJnnDj(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp)
-    dDdj_dDdjp_termA = dintDJJnn(n,np,a,j,ap,jp,Table_dKdJ_arg,Table_dKdJp_arg)
+function DintDJJnnDj(n::Int64,np::Int64,a::Float64,j::Float64,ap::Float64,jp::Float64,
+                     IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,IntTable_dKdJp::IntTable=IntTable_dKdJp_serial)
+
+    Integrand, dIntdj, dIntdjp = dintDJJnn(n,np,a,j,ap,jp,IntTable_dKdJ,IntTable_dKdJp)
     dj = djpdj(n,np,a,j,ap,jp)
-    return dDdj_dDdjp_termA[1] + dj*dDdj_dDdjp_termA[2], dDdj_dDdjp_termA[3]
+    return Integrand, dIntdj + dj*dIntdjp
 end
 
 """
-    D_DRR_JJnnpDj(n,np,a,j,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    D_DRR_JJnnpDj(n,np,a,j,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial,tabSMARes=tabSMARes_serial)
 
 Computation of DRR_JJnn, contribution of the (n,n') resonance number to DRR, and its total j-derivative.
 Returns a couple (DRR_JJnn, D(DRR_JJnn)/Dj) in this order.
@@ -316,35 +288,56 @@ Using log-sampling in the integration for better interpolation.
 - `np  ::Int64`  : second resonance number of the orbit.
 - `a   ::Float64`: semi-major axis of the orbit.
 - `j   ::Float64`: reduced angular momentum of the orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function D_DRR_JJnnpDj(n::Int64,np::Int64,a::Float64,j::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp,tabSMARes_arg=tabSMARes)
+function D_DRR_JJnnpDj(n::Int64,np::Int64,a::Float64,j::Float64,IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,
+                       IntTable_dKdJp::IntTable=IntTable_dKdJp_serial,tabSMARes::Array{Float64,2}=tabSMARes_serial)
+
     omega = n*nup(a,j) # Value of the resonant frequency
-    ResPoints = tabSMARes!(n,np,a,j,tabSMARes_arg) # Trying to compute the resonant line
-    if (ResPoints == false)
+    ResPoints = tabSMARes!(n,np,a,j,tabSMARes) # Trying to compute the resonant line
+    if (ResPoints == 0)
         return 0.0, 0.0 # If the resonant line is empty, we return 0.0 for the diffusion coefficient
     end
-    apmin, apmax = tabSMARes_arg[1], tabSMARes_arg[2] # Boundary of the SMA-region where the resonant line lies
-    dalphap = log(apmax/apmin)/(nbResPoints) # Step distance in log-space
-    dDnn = 0.0 # Initialisation of the result
-    Dnn = 0.0
-    termA, dinte = 0.0, 0.0
-    for alphap = range(log(apmin),length=nbResPoints,log(apmax)-dalphap) # Uniform logarithmic spacing of the SMA !! ATTENTION, we do not go through the last element, as we will sum in the middle of the interval
-        ap = exp(alphap + 0.5*dalphap) # Central position of the SMA considered
-        jp = getjRes(np,ap,omega) # Finding the location of the resonant jp
-        dinte, termA = DintDJJnnDj(n,np,a,j,ap,jp,Table_dKdJ_arg,Table_dKdJp_arg)
-        Dnn += dalphap*ap*termA
-        dDnn += dalphap*ap*dinte # Local contribution !! ATTENTION, not to forget the ap
+
+    # First resonance line
+    apmin1, apmax1 = tabSMARes[1,1], tabSMARes[1,2] # Boundary of the SMA-region where the resonant line lies
+    dalphap1 = log(apmax1/apmin1)/(nbResPoints) # Step distance in log-space
+
+    if (ResPoints == 2) # If second resonance line
+        apmin2, apmax2 = tabSMARes[2,1], tabSMARes[2,2] # Boundary of the SMA-region where the resonant line lies
+        dalphap2 = log(apmax2/apmin2)/(nbResPoints) # Step distance in log-space
     end
-    Dnn *= (n^(2))/(abs(np)) # Adding the prefactor in n^2/|np|
+
+    dDnn = 0.0 # Initialisation of the result
+    Dnn  = 0.0
+
+    for alphap1 = range(log(apmin1),length=nbResPoints,log(apmax1)-dalphap1) # Uniform logarithmic spacing of the SMA !! ATTENTION, we do not go through the last element, as we will sum in the middle of the interval
+        ap = exp(alphap1 + 0.5*dalphap1) # Central position of the SMA considered
+        jp = getjRes(np,ap,omega) # Finding the location of the resonant jp
+        Integrand, DIntDj = DintDJJnnDj(n,np,a,j,ap,jp,IntTable_dKdJ,IntTable_dKdJp)
+        Dnn  += dalphap1*ap*Integrand
+        dDnn += dalphap1*ap*DIntDj # Local contribution !! ATTENTION, not to forget the ap
+    end
+
+    if (ResPoints == 2) # If two resonance lines
+        for alphap2 = range(log(apmin2),length=nbResPoints,log(apmax2)-dalphap2) # Uniform logarithmic spacing of the SMA !! ATTENTION, we do not go through the last element, as we will sum in the middle of the interval
+            ap = exp(alphap2 + 0.5*dalphap2) # Central position of the SMA considered
+            jp = getjRes(np,ap,omega) # Finding the location of the resonant jp
+            Integrand, DIntDj = DintDJJnnDj(n,np,a,j,ap,jp,IntTable_dKdJ,IntTable_dKdJp)
+            Dnn  += dalphap2*ap*Integrand
+            dDnn += dalphap2*ap*DIntDj # Local contribution !! ATTENTION, not to forget the ap
+        end
+    end
+
+    Dnn  *= (n^(2))/(abs(np)) # Adding the prefactor in n^2/|np|
     dDnn *= (n^(2))/(abs(np))
     return Dnn, dDnn#, apmin, apmax # Output
 end
 
 """
-    D_DRR_JJDj(a,j,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    D_DRR_JJDj(a,j,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial,tabSMARes=tabSMARes_serial)
 
 Computation of DRR_JJ the scalar resonant diffusion coefficient in JJ and its total j-derivative.
 Returns a couple (DRR_JJ, D(DRR_JJ)/Dj) in this order.
@@ -352,28 +345,30 @@ Returns a couple (DRR_JJ, D(DRR_JJ)/Dj) in this order.
 # Arguments
 - `a   ::Float64`: semi-major axis of the orbit.
 - `j   ::Float64`: reduced angular momentum of the orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function D_DRR_JJDj(a::Float64,j::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp,tabSMARes_arg=tabSMARes)
-    D = 0.0 # Initialisation of the result
+function D_DRR_JJDj(a::Float64,j::Float64,IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,
+                    IntTable_dKdJp::IntTable=IntTable_dKdJp_serial,tabSMARes::Array{Float64,2}=tabSMARes_serial)
+
+    D  = 0.0 # Initialisation of the result
     dD = 0.0
     for iPair=1:nbResPairs # Loop over the resonant pairs
         n, np = tabResPairs[1,iPair], tabResPairs[2,iPair] # Value of the considered resonance (n,np)
-        Dnn_dDnn = D_DRR_JJnnpDj(n,np,a,j,Table_dKdJ_arg,Table_dKdJp_arg,tabSMARes_arg)
-        D += Dnn_dDnn[1]
-        dD += Dnn_dDnn[2]
+        Dnn, dDnn = D_DRR_JJnnpDj(n,np,a,j,IntTable_dKdJ,IntTable_dKdJp,tabSMARes)
+        D  += Dnn
+        dD += dDnn
     # Adding the contribution from the resonance pair (n,np)
     end
-    D *= 4.0*pi*G^(2) # Adding the prefactor 4piG^2
+    D  *= 4.0*pi*G^(2) # Adding the prefactor 4piG^2
     dD *= 4.0*pi*G^(2)
     return D, dD # Output
 end
 
 
 """
-    D_DRR_JJDJ(a,j,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    D_DRR_JJDJ(a,j,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial,tabSMARes=tabSMARes_serial)
 
 Computation of DRR_JJ the scalar resonant diffusion coefficient in JJ and its total J-derivative.
 Returns a couple (DRR_JJ, D(DRR_JJ)/DJ) in this order.
@@ -381,18 +376,20 @@ Returns a couple (DRR_JJ, D(DRR_JJ)/DJ) in this order.
 # Arguments
 - `a   ::Float64`: semi-major axis of the orbit.
 - `j   ::Float64`: reduced angular momentum of the orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function D_DRR_JJDJ(a::Float64,j::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp,tabSMARes_arg=tabSMARes)
-    D_dD = D_DRR_JJDj(a,j,Table_dKdJ_arg,Table_dKdJp_arg,tabSMARes_arg)
-    return D_dD[1], D_dD[2]/Jc(a)
+function D_DRR_JJDJ(a::Float64,j::Float64,IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,
+                    IntTable_dKdJp::IntTable=IntTable_dKdJp_serial,tabSMARes::Array{Float64,2}=tabSMARes_serial)
+
+    D, dD = D_DRR_JJDj(a,j,IntTable_dKdJ,IntTable_dKdJp,tabSMARes)
+    return D, dD/Jc(a)
 end
 
 
 """
-    DRR_J_JJ(a,j,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    DRR_J_JJ(a,j,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJp=IntTable_dKdJp_serial,tabSMARes=tabSMARes_serial)
 
 Computation of DRR_JJ the scalar resonant diffusion coefficient in JJ-coordinates and of DRR_J the scalar resonant diffusion coefficient in J-coordinate.
 Returns a couple (DRR_J, DRR_JJ) in this order.
@@ -400,30 +397,34 @@ Returns a couple (DRR_J, DRR_JJ) in this order.
 # Arguments
 - `a   ::Float64`: semi-major axis of the orbit.
 - `j   ::Float64`: reduced angular momentum of the orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function DRR_J_JJ(a::Float64,j::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp,tabSMARes_arg=tabSMARes)
-    DrrJJ_dDrrJJ = D_DRR_JJDJ(a,j,Table_dKdJ_arg,Table_dKdJp_arg,tabSMARes_arg)
+function DRR_J_JJ(a::Float64,j::Float64,IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,
+                  IntTable_dKdJp::IntTable=IntTable_dKdJp_serial,tabSMARes::Array{Float64,2}=tabSMARes_serial)
+
+    DrrJJ, dDrrJJ = D_DRR_JJDJ(a,j,IntTable_dKdJ,IntTable_dKdJp,tabSMARes)
     J = j*Jc(a)
-    return DrrJJ_dDrrJJ[1]/(2.0*J) + DrrJJ_dDrrJJ[2]/2, DrrJJ_dDrrJJ[1] # Returns DRR_J, DRR_JJ
+    return DrrJJ/(2.0*J) + dDrrJJ/2, DrrJJ # Returns DRR_J, DRR_JJ
 end
 
 """
-    DRR_J(a,j,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    DRR_J(a,j,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial,tabSMARes=tabSMARes_serial)
 
 Computation of DRR_J the scalar resonant diffusion coefficient in J-coordinate.
 
 # Arguments
 - `a   ::Float64`: semi-major axis of the orbit.
 - `j   ::Float64`: reduced angular momentum of the orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function DRR_J(a::Float64,j::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp,tabSMARes_arg=tabSMARes)
-    return DRR_J_JJ(a,j,Table_dKdJ_arg,Table_dKdJp_arg,tabSMARes_arg)[1] # Returns DRR_J
+function DRR_J(a::Float64,j::Float64,IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,
+               IntTable_dKdJp::IntTable=IntTable_dKdJp_serial,tabSMARes::Array{Float64,2}=tabSMARes_serial)
+
+    return DRR_J_JJ(a,j,IntTable_dKdJ,IntTable_dKdJp,tabSMARes)[1] # Returns DRR_J
 end
 
 ##################################################
@@ -431,7 +432,7 @@ end
 ##################################################
 
 """
-    DRR_j_jj(a,j,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    DRR_j_jj(a,j,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial,tabSMARes=tabSMARes_serial)
 
 Computation of DRR_jj the (normalized) scalar resonant diffusion coefficient in jj-coordinates and of DRR_j the scalar resonant diffusion coefficient in j-coordinate.
 Returns a couple (DRR_j, DRR_jj) in this order.
@@ -439,27 +440,31 @@ Returns a couple (DRR_j, DRR_jj) in this order.
 # Arguments
 - `a   ::Float64`: semi-major axis of the orbit.
 - `j   ::Float64`: reduced angular momentum of the orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function DRR_j_jj(a::Float64,j::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp,tabSMARes_arg=tabSMARes)
-    DrrJ_DrrJJ = DRR_J_JJ(a,j,Table_dKdJ_arg,Table_dKdJp_arg,tabSMARes_arg)
-    return DrrJ_DrrJJ[1]/Jc(a), DrrJ_DrrJJ[2]/(Jc(a)^(2))# Returns DRR_j, DRR_jj
+function DRR_j_jj(a::Float64,j::Float64,IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,
+                  IntTable_dKdJp::IntTable=IntTable_dKdJp_serial,tabSMARes::Array{Float64,2}=tabSMARes_serial)
+
+    DrrJ, DrrJJ = DRR_J_JJ(a,j,IntTable_dKdJ,IntTable_dKdJp,tabSMARes)
+    return DrrJ/Jc(a), DrrJJ/(Jc(a)^(2))# Returns DRR_j, DRR_jj
 end
 
 """
-    DRR_j(a,j,Table_dKdJ_arg=Table_dKdJ,Table_dKdJ_arg=Table_dKdJp)
+    DRR_j(a,j,IntTable_dKdJ=IntTable_dKdJ_serial,IntTable_dKdJ=IntTable_dKdJp_serial,tabSMARes=tabSMARes_serial)
 
 Computation of DRR_j the (normalized) scalar resonant diffusion coefficient in j-coordinate.
 
 # Arguments
 - `a   ::Float64`: semi-major axis of the orbit.
 - `j   ::Float64`: reduced angular momentum of the orbit.
-- `Table_dKdJ_arg:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
-- `Table_dKdJp_arg::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
+- `IntTable_dKdJ:: IntTable`: Structure which contains the tables needed for the computation of dK/dj and K.
+- `IntTable_dKdJp::IntTable`: Structure which contains the tables needed for the computation of dK/djp.
 
 """
-function DRR_j(a::Float64,j::Float64,Table_dKdJ_arg=Table_dKdJ,Table_dKdJp_arg=Table_dKdJp,tabSMARes_arg=tabSMARes)    
-    return DRR_J(a,j,Table_dKdJ_arg,Table_dKdJp_arg,tabSMARes_arg)[1]/(Jc(a))# Returns DRR_j
+function DRR_j(a::Float64,j::Float64,IntTable_dKdJ::IntTable=IntTable_dKdJ_serial,
+               IntTable_dKdJp::IntTable=IntTable_dKdJp_serial,tabSMARes::Array{Float64,2}=tabSMARes_serial)  
+  
+    return DRR_J(a,j,IntTable_dKdJ,IntTable_dKdJp,tabSMARes)[1]/(Jc(a))# Returns DRR_j
 end

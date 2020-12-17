@@ -66,10 +66,10 @@ function tabDRRGrid!()
             if j<=jlc(a) # Do not compute DRR within the loss cone
                 tabDRRjjGrid[iGrid] = 0.0
             elseif j<1.0
-                tabSMARes_parallel = zeros(Float64,4) # Container of tabSMARes for the current thread 
-                Table_K_parallel = Table_create!()
+                tabSMARes_parallel = zeros(Float64,2,2) # Container of tabSMARes for the current thread 
+                IntTable_K_parallel = IntTable_create!()
                 
-                DRR = DRR_jj(a,j,Table_K_parallel,tabSMARes_parallel)
+                DRR = DRR_jj(a,j,IntTable_K_parallel,tabSMARes_parallel)
                 tabDRRjjGrid[iGrid] = DRR # Computing DRR_jj with the thread's containers
             else
                 tabDRRjjGrid[iGrid] = 0.0

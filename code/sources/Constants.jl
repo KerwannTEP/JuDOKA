@@ -47,3 +47,11 @@ This value comes from `astropy`:
 ```
 """
 const cvel = 306601393.7879527 
+
+"""
+    d_BH
+
+Distance to SMBH Sagittarius A* (in mpc).
+Taken from Gillessen et al. (2017): `An Update on Monitoring Stellar Orbits in the Galactic Center`
+"""
+const d_BH = 8.32*10^6 # Distance to Sgr A* (in mpc)

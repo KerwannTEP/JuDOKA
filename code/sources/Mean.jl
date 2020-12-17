@@ -81,6 +81,26 @@ function jlc(a::Float64)
 end
 
 """
+    ecc_to_j(ecc::Float64)
+
+Converts eccentricity to normalized angular momentum.
+"""
+function ecc_to_j(ecc::Float64)
+    return sqrt(1.0-ecc^2)
+end
+
+"""
+    uncertainty_ecc_to_j(ecc::Float64,de::Float64)
+
+Converts uncertainty in eccentricity to uncertainty in normalized angular momentum.
+"""
+function uncertainty_ecc_to_j(ecc::Float64,de::Float64)
+    j = ecc_to_j(ecc)
+    dj = ecc/j * de
+    return dj
+end
+
+"""
     nuKep(a)
     
 Fast Keplerian frequency of an orbit with semi-major axis a.

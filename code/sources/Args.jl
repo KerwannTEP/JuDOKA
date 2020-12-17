@@ -7,10 +7,6 @@ tabargs = ArgParseSettings()
     help = "Parallel computation: yes/no"
     arg_type = String
     default = "no"
-    "--lstart"
-    help = "Lower harmonic number used to compute alpha(a,j)"
-    arg_type = Int64
-    default = 1
     "--lmax"
     help = "Maximum harmonic number"
     arg_type = Int64

@@ -115,9 +115,9 @@ Equal to `N(a)=Nbar*(a/a0)^(2-gamma)`.
 """
 function NBath(iBath::Int64,a::Float64)
     gamma = tabgammaBath[iBath] # Cusp index of the current bath population
-    Nbar = tabNbarBath[iBath]
-    a0 = taba0Bath[iBath] # Scale radius of the current bath population
-     # Normalisation in SMA-space of the current population
+    Nbar  = tabNbarBath[iBath]
+    a0    = taba0Bath[iBath] # Scale radius of the current bath population
+    # Normalisation in SMA-space of the current population
     #####
     return Nbar*(a/a0)^(2.0-gamma) # Output
 end
@@ -139,8 +139,8 @@ end
 """
     fjBath(a,j)
     
-Returns the PDF of fj(j;a).
-Normalized so that integrating `fj(j;a)` over `[jlc(a),1]` yields 1.
+Returns the conditional PDF fj(j|a).
+Normalized so that integrating `fj(j|a)` over `[jlc(a),1]` yields 1.
 Proportional to `2j` in the range `[jlc(a),1]`.
 
 # Remark:
@@ -154,8 +154,8 @@ end
 """
     dfjBathdj(a,j)
     
-Returns the j-gradient of the PDF of fj(j;a).
-Normalized so that integrating `fj(j;a)` over `[jlc(a),1]` yields 1.
+Returns the conditional PDF fj(j|a).
+Normalized so that integrating `fj(j|a)` over `[jlc(a),1]` yields 1.
 
 # Remark:
 - Independent of the family of the bath.
@@ -174,8 +174,8 @@ function FtotBath(a::Float64,j::Float64)
     res = 0.0 # Initialising the result
     #####
     for iBath=1:nbBath # Loop over the bath components
-        m = tabmBath[iBath]^(2) # Individual mass^2 of the current bath component
-        res += m*NBath(iBath,a) # Contribution from the bath component
+        m = tabmBath[iBath] # Individual mass of the current bath component
+        res += m^(2)*NBath(iBath,a) # Contribution from the bath component
     end
     res *= fjBath(a,j)
     #####

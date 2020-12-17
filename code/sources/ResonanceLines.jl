@@ -77,46 +77,52 @@ function bisection(fun, xl::Float64, xu::Float64, tolx::Float64=4.0*eps(Float64)
     #####
     fl, fu = fun(xl), fun(xu) # Evaluating the function on the bracket
     #####
-    @assert fl*fu < 0.0 "bisect: NOT A BRACKET"
-    #####
-    if (fl == 0.0) # We have already found a solution on the left bracket
+    if (abs(fl) <= tolf) # We have already found a solution on the left bracket
         return xl # Returning the left bracket
     end
     #####
-    if (fu == 0.0) # We have already found a solution on the right bracket
+    if (abs(fu) <= tolf) # We have already found a solution on the right bracket
         return xu # Returning the right bracket
     end
+    #####
+    @assert fl*fu < 0.0 "bisection: NOT A BRACKET"
     #####
     iter = 0 # Counter for the iterations
     #####
     while true # Bisection loop
+        #####
         xm = (xl+xu)*0.5 # Middle value
+        #####
+        if ((abs(xu-xl) <= tolx) || (iter > iterMAX)) # The considered bracket is smaller than the tolerance, or we have made too many iterations
+            return xm # Returning the middle value
+        end
+        #####
         fm = fun(xm) # Value at the midpoint
         #####
-        iter += 1 # Updating the iteration counter
+        iter += 1 # Updating the counter of iterations
         #####
+        if (abs(fm) <= tolf) # The middle value is below the threshold
+            return xm # Returning the middle value
+        end
+        #####
+        # Otherwise, we iterate the bisection
         if (fm*fl < 0.0) # One root can be found between the left point and the middle point
             xu, fu = xm, fm # The upper point becomes the midpoint
         else
             xl, fl = xm, fm # The lower point becomes the midpoint
         end
-        #####
-        if ((abs(xu-xl) < tolx) || (abs(fm) <= tolf) || (iter > iterMAX)) # Testing whether or not we have found a root given the tolerances or if we have made enough iterations
-            break # We have found a root
-        end
     end
-    return (xl+xu)*0.5 # Returning the central location of the bracket
 end
 
 ##################################################
 
 """
-    tabSMARes
+    tabSMARes_serial
     
 Static container for the resonant lines, contains the edge of the domain [amin,amax] of the resonant line.
 Use `tabSMARes!()` to fill it in.
 """
-const tabSMARes = zeros(Float64,4)
+const tabSMARes_serial = zeros(Float64,2,2)
 """
     amin
     
@@ -177,10 +183,10 @@ function getjRes(np::Int64,ap::Float64,omega::Float64)
 end
 
 """
-    tabSMARes!(n,np,a,j,tabSMARes_arg=tabSMARes)
+    tabSMARes!(n,np,a,j,tabSMARes=tabSMARes_serial)
     
 Computes, if it exists, a given resonance line as an array of (ap,jp) locations in orbital space.
-The values are written the the array tabSMARes_arg, which is set to be tabSMARes by default.
+The values are written the the array tabSMARes, which is set to be tabSMARes_serial by default.
 
 This function returns true if a line has been constructed and false otherwise.
 
@@ -188,14 +194,14 @@ This function returns true if a line has been constructed and false otherwise.
 - Part of the code could be refactored.
 - The scan in SMAResSearch sometimes makes a lot of useless calculations.
 """
-function tabSMARes!(n::Int64,np::Int64,a::Float64,j::Float64,tabSMARes_arg=tabSMARes)
+function tabSMARes!(n::Int64,np::Int64,a::Float64,j::Float64,tabSMARes::Array{Float64,2}=tabSMARes_serial)
     #####
     omega = n*nup(a,j) # Value of the resonant frequency to match
     #####
     # First, we scroll over tabSMAResSEARCH, to determine in that array
     # the smallest and largest SMA for which the resonance condition is solvable
-    iSMAmin1, iSMAmax1 = nbSMAResSEARCH+1, 0 # Indices of the boundary of the SMA-range, taken outside the array range
-    iSMAmin2, iSMAmax2 = nbSMAResSEARCH+1, 0 # Indices for the second resonance line (if any)
+    iSMAmin = [nbSMAResSEARCH+1, nbSMAResSEARCH+1] 
+    iSMAmax = [0, 0] 
 
     ##### 
     take = -1 # Index to check which resonance line we are on
@@ -206,37 +212,38 @@ function tabSMARes!(n::Int64,np::Int64,a::Float64,j::Float64,tabSMARes_arg=tabSM
         #####
         if(SMAResQ(np,ap,omega)) # The resonance condition can be solved for this value of ap
             #####
-            if (take == -1) #enter first resonance line
+            if (take == -1) # Enter first resonance line
                 take = 0
                 nbLines = 1
-            elseif (take == 1) #enter second resonance line
+            elseif (take == 1) # Enter second resonance line
                 nbLines = 2
             end
-            if (take == 0) #first resonance line
-                if (iSMA < iSMAmin1) # We found a smaller value of ap for which the resonance condition can be solved
-                    iSMAmin1 = iSMA # Updating iSMAmin  
+            if (take == 0) # First resonance line
+                if (iSMA < iSMAmin[1]) # We found a smaller value of ap for which the resonance condition can be solved
+                    iSMAmin[1] = iSMA # Updating iSMAmin  
                 end
-            elseif (take == 1) #second resonance line
-                if (iSMA < iSMAmin2) # We found a smaller value of ap for which the resonance condition can be solved
-                    iSMAmin2 = iSMA # Updating iSMAmin  
+            elseif (take == 1) # Second resonance line
+                if (iSMA < iSMAmin[2]) # We found a smaller value of ap for which the resonance condition can be solved
+                    iSMAmin[2] = iSMA # Updating iSMAmin  
                 end
             end
             #####
-            if (take == 0) #first resonance line
-                if (iSMA > iSMAmax1) # We found a larger value of ap for which the resonance condition can be solved
-                    iSMAmax1 = iSMA # Updating iSMAmax
+            if (take == 0) # First resonance line
+                if (iSMA > iSMAmax[1]) # We found a larger value of ap for which the resonance condition can be solved
+                    iSMAmax[1] = iSMA # Updating iSMAmax
                 end
-            elseif (take == 1) #second resonance line
-                if (iSMA > iSMAmax2) # We found a smaller value of ap for which the resonance condition can be solved
-                    iSMAmax2 = iSMA # Updating iSMAmin  
+            elseif (take == 1) # Second resonance line
+                if (iSMA > iSMAmax[2]) # We found a smaller value of ap for which the resonance condition can be solved
+                    iSMAmax[2] = iSMA # Updating iSMAmin  
                 end
             end
         else
-            if (take == 0) #end of the first (main) resonance line
+            if (take == 0) # End of the first (main) resonance line
                 take = 1
             end
         end
     end
+
     #####
     # We have not been able to find SMA for which the resonance condition can be solved
     if (nbLines == 0)
@@ -244,88 +251,49 @@ function tabSMARes!(n::Int64,np::Int64,a::Float64,j::Float64,tabSMARes_arg=tabSM
     end
     #####
     # In all the other cases, we have been able to find a SMA-region
-    #####
-    # First resonance line
-    if (iSMAmin1 == 1) # The minimum SMA is exactly at the edge of the region
-        tabSMARes_arg[1] = amin # Lower edge of the considered region
-    #####
-    else # The lower edge is not at the edge of the SMA domain
-        # We must now find on which side of the (ap,jp)-triangle the resonant line ends, in the range given by tabSMAResSEARCH
-        SMAlower, SMAupper = tabSMAResSEARCH[iSMAmin1-1], tabSMAResSEARCH[iSMAmin1] # Range in SMA over which we must search for a solution
-        #####
-        # First, we try to see if we can find a solution on the right, i.e. along jp=1.0
-        omegalower, omegaupper = np*nup(SMAlower,1.0)-omega, np*nup(SMAupper,1.0)-omega # Value of the resonance frequency along jp=1.0, in the SMA range [SMAlower,SMAupper]
-        #####
-        if (omegalower*omegaupper < 0.0) # We found a bracketing interval along jp=1.0, i.e. the resonant location is on the right
-            tabSMARes_arg[1] = bisection(ap -> np*nup(ap,1.0)-omega,SMAlower,SMAupper) # Finding the solution along jp=1.0, in the SMA range [SMAlower,SMAupper]
-        else # Else, we must search for the resonant location along jp=jlc(ap), i.e. the resonant location is on the left
-            tabSMARes_arg[1] = bisection(ap -> np*nup(ap,jlc(ap))-omega,SMAlower,SMAupper) # Finding the solution along jp=jlc(ap), in the SMA range [SMAlower,SMAupper]
-        end
-    end
-    #####
-    if (iSMAmax1 == nbSMAResSEARCH) # The maximum SMA is exactly at the edge of the region
-        tabSMARes_arg[2] = amax # Upper edge of the considered region
-    #####
-    else # The upper edge is not at the edge of the SMA domain
-        # We must now find on which side of the (ap,jp)-triangle the resonant line ends, in the range given by tabSMA ResSEARCH
-        SMAlower, SMAupper = tabSMAResSEARCH[iSMAmax1], tabSMAResSEARCH[iSMAmax1+1] # Range in SMA over which we must search for a solution
-        #####
-        # First, we try to see if we can find a solution on the right, i.e. along jp=1.0
-        omegalower, omegaupper = np*nup(SMAlower,1.0)-omega, np*nup(SMAupper,1.0)-omega # Value of the resonance frequency along jp=1.0, in the SMA range [SMAlower,SMAupper]
-        #####
-        if (omegalower*omegaupper < 0.0) # We found a bracketing interval along jp=1.0, i.e. the resonant location is on the right
-            tabSMARes_arg[2] = bisection(ap -> np*nup(ap,1.0)-omega,SMAlower,SMAupper) # Finding the solution along jp=1.0, in the SMA range [SMAlower,SMAupper]
-        else # Else, we must search for the resonant location along jp=jlc(ap), i.e. the resonant location is on the left
-            tabSMARes_arg[2] = bisection(ap -> np*nup(ap,jlc(ap))-omega,SMAlower,SMAupper) # Finding the solution along jp=jlc(ap), in the SMA range [SMAlower,SMAupper]
-        end
-    end
-
-    #####
-    #####
-    # Second resonance line (if any)
-   
-     if (nbLines == 2) # If there is asecond resonance line
     
+    for iLine=1:2 # Loop over the resonance lines (there are 1 or 2)
 
-        if (iSMAmin2 == 1) # The minimum SMA is exactly at the edge of the region
-            tabSMARes_arg[3] = amin # Lower edge of the considered region
-    #####
-        else # The lower edge is not at the edge of the SMA domain
-        # We must now find on which side of the (ap,jp)-triangle the resonant line ends, in the range given by tabSMAResSEARCH
-            SMAlower, SMAupper = tabSMAResSEARCH[iSMAmin2-1], tabSMAResSEARCH[iSMAmin2] # Range in SMA over which we must search for a solution
-        #####
-        # First, we try to see if we can find a solution on the right, i.e. along jp=1.0
-            omegalower, omegaupper = np*nup(SMAlower,1.0)-omega, np*nup(SMAupper,1.0)-omega # Value of the resonance frequency along jp=1.0, in the SMA range [SMAlower,SMAupper]
+        if !(iLine == 2 && nbLines != 2) # There are two resonance lines
 
-        #####
-            if (omegalower*omegaupper < 0.0) # We found a bracketing interval along jp=1.0, i.e. the resonant location is on the right
-                tabSMARes_arg[3] = bisection(ap -> np*nup(ap,1.0)-omega,SMAlower,SMAupper) # Finding the solution along jp=1.0, in the SMA range [SMAlower,SMAupper]
-            else # Else, we must search for the resonant location along jp=jlc(ap), i.e. the resonant location is on the left
-                tabSMARes_arg[3] = bisection(ap -> np*nup(ap,jlc(ap))-omega,SMAlower,SMAupper) # Finding the solution along jp=jlc(ap), in the SMA range [SMAlower,SMAupper]
+            if (iSMAmin[iLine] == 1) # The minimum SMA is exactly at the edge of the region
+                tabSMARes[iLine,1] = amin # Lower edge of the considered region
+            #####
+            else # The lower edge is not at the edge of the SMA domain
+                # We must now find on which side of the (ap,jp)-triangle the resonant line ends, in the range given by tabSMAResSEARCH
+                SMAlower, SMAupper = tabSMAResSEARCH[iSMAmin[iLine]-1], tabSMAResSEARCH[iSMAmin[iLine]] # Range in SMA over which we must search for a solution
+                #####
+                # First, we try to see if we can find a solution on the right, i.e. along jp=1.0
+                omegalower, omegaupper = np*nup(SMAlower,1.0)-omega, np*nup(SMAupper,1.0)-omega # Value of the resonance frequency along jp=1.0, in the SMA range [SMAlower,SMAupper]
+                #####
+                if (omegalower*omegaupper < 0.0) # We found a bracketing interval along jp=1.0, i.e. the resonant location is on the right
+                    tabSMARes[iLine,1] = bisection(ap -> np*nup(ap,1.0)-omega,SMAlower,SMAupper) # Finding the solution along jp=1.0, in the SMA range [SMAlower,SMAupper]
+                else # Else, we must search for the resonant location along jp=jlc(ap), i.e. the resonant location is on the left
+                    tabSMARes[iLine,1] = bisection(ap -> np*nup(ap,jlc(ap))-omega,SMAlower,SMAupper) # Finding the solution along jp=jlc(ap), in the SMA range [SMAlower,SMAupper]
+                end
             end
-        end
-
-    #####
-        if (iSMAmax2 == nbSMAResSEARCH) # The maximum SMA is exactly at the edge of the region
-            tabSMARes_arg[4] = amax # Upper edge of the considered region
-    #####
-        else # The upper edge is not at the edge of the SMA domain
-        # We must now find on which side of the (ap,jp)-triangle the resonant line ends, in the range given by tabSMA ResSEARCH
-            SMAlower, SMAupper = tabSMAResSEARCH[iSMAmax2], tabSMAResSEARCH[iSMAmax2+1] # Range in SMA over which we must search for a solution
-        #####
-        # First, we try to see if we can find a solution on the right, i.e. along jp=1.0
-            omegalower, omegaupper = np*nup(SMAlower,1.0)-omega, np*nup(SMAupper,1.0)-omega # Value of the resonance frequency along jp=1.0, in the SMA range [SMAlower,SMAupper]
-        #####
-            if (omegalower*omegaupper < 0.0) # We found a bracketing interval along jp=1.0, i.e. the resonant location is on the right
-                tabSMARes_arg[4] = bisection(ap -> np*nup(ap,1.0)-omega,SMAlower,SMAupper) # Finding the solution along jp=1.0, in the SMA range [SMAlower,SMAupper]
-            else # Else, we must search for the resonant location along jp=jlc(ap), i.e. the resonant location is on the left
-                tabSMARes_arg[4] = bisection(ap -> np*nup(ap,jlc(ap))-omega,SMAlower,SMAupper) # Finding the solution along jp=jlc(ap), in the SMA range [SMAlower,SMAupper]
+            #####
+            if (iSMAmax[iLine] == nbSMAResSEARCH) # The maximum SMA is exactly at the edge of the region
+                tabSMARes[iLine,2] = amax # Upper edge of the considered region
+            #####
+            else # The upper edge is not at the edge of the SMA domain
+                # We must now find on which side of the (ap,jp)-triangle the resonant line ends, in the range given by tabSMA ResSEARCH
+                SMAlower, SMAupper = tabSMAResSEARCH[iSMAmax[iLine]], tabSMAResSEARCH[iSMAmax[iLine]+1] # Range in SMA over which we must search for a solution
+                #####
+                # First, we try to see if we can find a solution on the right, i.e. along jp=1.0
+                omegalower, omegaupper = np*nup(SMAlower,1.0)-omega, np*nup(SMAupper,1.0)-omega # Value of the resonance frequency along jp=1.0, in the SMA range [SMAlower,SMAupper]
+                #####
+                if (omegalower*omegaupper < 0.0) # We found a bracketing interval along jp=1.0, i.e. the resonant location is on the right
+                    tabSMARes[iLine,2] = bisection(ap -> np*nup(ap,1.0)-omega,SMAlower,SMAupper) # Finding the solution along jp=1.0, in the SMA range [SMAlower,SMAupper]
+                else # Else, we must search for the resonant location along jp=jlc(ap), i.e. the resonant location is on the left
+                    tabSMARes[iLine,2] = bisection(ap -> np*nup(ap,jlc(ap))-omega,SMAlower,SMAupper) # Finding the solution along jp=jlc(ap), in the SMA range [SMAlower,SMAupper]
+                end
             end
+
+        else # There is only one resonance line
+            tabSMARes[2,1] = 0.0
+            tabSMARes[2,2] = 0.0   
         end
-    else # If there is only one resonance line, reset to 0 the SMA values of the second resonance line
-        tabSMARes_arg[3] = 0.0
-        tabSMARes_arg[4] = 0.0
     end
-    #####
-    return nbLines # We have been able to find the edge of the resonant SMA-domain
+  
 end
