@@ -15,6 +15,7 @@ $ julia
 ```
 
 2) Install the following packages:
+
 - `StaticArrays`
 - `HypergeometricFunctions`
 - `BenchmarkTools`
@@ -23,7 +24,6 @@ $ julia
 - `Interpolations`
 - `ArgParse`
 - `SpecialFunctions`
-
 - `Distributions`
 - `Plots`
 
@@ -39,4 +39,20 @@ julia> exit()
 ## WARNING !!
 
 **DO NOT INTERRUPT THE DOWNLOADING OF THE PACKAGES !!!!**
+
+## MODIFY THE BACKGROUND FAMILIES
+
+To modify the background of the S-Cluster, open the folder "code/background"
+and open the file "inputBath.txt".
+	
+Do not change the line 1, which serves as legend.
+Starting from line 2, enter the values for each family, one family per line.
+Enter the four values, separated by a tabulation.
+
+The numbers describe:
+- gamma: Cusp power of the family.
+- mass_star[Msun]: Mass of the family's individuals, which can be stars or BHs (in solar masses).
+- a0[mpc]: scale factor of the family (in mpc).
+- Mtot: Enclosed mass of the family within the radius a0 (scale factor given previously).
+
 	
