@@ -117,3 +117,60 @@ $ math -script Diffusion_Coefficients_Cut.m
 Once done, we recover the plot as a PNG file of the name `DjjCut.png` 
 in the folder "code/graphs/Mathematica".
 
+
+## PLOT A DIFFUSION COEFFICIENT MAP IN ORBITAL SPACE
+
+To compute an orbital space map of the SRR diffusion coefficients DRRjj and DNRjj,
+one needs to access the `code/tests` folder and run the following command in 
+the terminal:
+
+```
+$ julia Mapping.jl
+```
+
+If one wants to run this with parallelization, one needs to run the following 
+commands (supposing one is using bash)
+
+```
+$ export JULIA_NUM_THREADS=4
+$ export JULIA_CPU_THREADS=4
+$ julia -p 4 Mapping.jl --parallel yes --lmax 10
+```
+	
+where 4 is the number of parallelized threads. One can check the number of 
+threads by opening the Julia terminal and by running the command
+
+```
+julia> Threads.nthreads()
+```
+
+The resulting file will be created in the folder `code/data` under the name 
+`Dump_Diffusion_Coefficients.hf5`.
+
+### PLOT USING JULIA
+
+Go to the folder `code/tests/Julia` and run the file `PlotContours.jl` using the command
+
+```
+$ julia PlotContours.jl
+```
+    
+A log-log plot of the diffusion coefficients which have just been computed is
+displayed on a window. To terminate the programm, close the window and type
+the **`Enter`** key on the terminal.
+
+Once this is done, the figure is recovered as a PNG file of the name `Djj.png` 
+in the folder `code/graphs/Julia`.
+
+### PLOT USING MATHEMATICA
+
+Go to the folder `code/tests/Scripts` and evaluate the Mathematica script
+`Diffusion_Coefficients.m` using the command
+
+```
+$ math -script Diffusion_Coefficients.m 
+```
+
+Once done, we recover the plot as a PNG file of the name `Djj.png` 
+in the folder `code/graphs/Mathematica`.
+
