@@ -2,11 +2,11 @@
 
 Julia Diffusion of Orbits for Keplerian Actions
 
-## INSTALLATION
+## Installation
 
 Install Julia by following the instruction at `https://julialang.org/downloads/platform/`.
 
-## PACKAGES
+## Packages
 
 1) Open the terminal and type
 
@@ -40,7 +40,7 @@ julia> exit()
 
 **DO NOT INTERRUPT THE DOWNLOADING OF THE PACKAGES !!!!**
 
-## MODIFY THE BACKGROUND FAMILIES
+## Modify the background families
 
 To modify the background of the S-Cluster, open the folder `code/background`
 and open the file `inputBath.txt`.
@@ -55,7 +55,7 @@ The numbers describe:
 - `a0[mpc]`: scale factor of the family (in mpc).
 - `Mtot(<a0)`: Enclosed mass of the family within the radius a0 (scale factor given previously).
 
-## PLOT A DIFFUSION COEFFICIENT a-cut MAP IN ORBITAL SPACE
+## Plot a diffusion coefficients a-cut map in orbital space
 
 To compute a mapping of the diffusion coefficients DRR and DNR at fixed 
 semi-major axis, and depending on reduced angular momentum, one needs to open 
@@ -90,7 +90,7 @@ The resulting file will be created in the folder `code/data` under the name
 Once one has recovered the `Dump_Diffusion_Coefficients_Cut.hf5` file using the latter
 method, one can plot the a-cut in orbital space of the relevant coefficients.
 
-### PLOT USING JULIA
+### Plot using Julia
 
 Go to the folder `code/tests/Julia` and run the file `PlotCut.jl` using the command
 
@@ -105,7 +105,7 @@ the **`Enter`** key on the terminal.
 Once this is done, the figure is recovered as a PNG file of the name `DjjCut.png` 
 in the folder `code/graphs/Julia`.
 
-### PLOT USING MATHEMATICA
+### Plot using Mathematica
 
 Go to the folder `code/tests/Scripts` and evaluate the Mathematica script
 `Diffusion_Coefficients_Cut.m` using the command
@@ -118,7 +118,7 @@ Once done, we recover the plot as a PNG file of the name `DjjCut.png`
 in the folder "code/graphs/Mathematica".
 
 
-## PLOT A DIFFUSION COEFFICIENT MAP IN ORBITAL SPACE
+## Plot a diffusion coefficients map in orbital space
 
 To compute an orbital space map of the SRR diffusion coefficients DRRjj and DNRjj,
 one needs to access the `code/tests` folder and run the following command in 
@@ -147,7 +147,7 @@ julia> Threads.nthreads()
 The resulting file will be created in the folder `code/data` under the name 
 `Dump_Diffusion_Coefficients.hf5`.
 
-### PLOT USING JULIA
+### Plot using Julia
 
 Go to the folder `code/tests/Julia` and run the file `PlotContours.jl` using the command
 
@@ -162,7 +162,7 @@ the **`Enter`** key on the terminal.
 Once this is done, the figure is recovered as a PNG file of the name `Djj.png` 
 in the folder `code/graphs/Julia`.
 
-### PLOT USING MATHEMATICA
+### Plot using Mathematica
 
 Go to the folder `code/tests/Scripts` and evaluate the Mathematica script
 `Diffusion_Coefficients.m` using the command
