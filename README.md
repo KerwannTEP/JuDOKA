@@ -36,7 +36,7 @@ To exit the Julia terminal, type the command
 ```
 julia> exit()
 ```
-## WARNING !!
+### !! WARNING !!
 
 **DO NOT INTERRUPT THE DOWNLOADING OF THE PACKAGES !!!!**
 
@@ -90,4 +90,30 @@ The resulting file will be created in the folder `code/data` under the name
 Once one has recovered the `Dump_Diffusion_Coefficients_Cut.hf5` file using the latter
 method, one can plot the a-cut in orbital space of the relevant coefficients.
 
-### USING JULIA
+### PLOT USING JULIA
+
+Go to the folder `code/tests/Julia` and run the file `PlotCut.jl` using the command
+
+```
+$ julia PlotCut.jl
+```
+    
+A log-log plot of the diffusion coefficients which have just been computed is
+displayed on a window. To terminate the programm, close the window and type
+the **`Enter`** key on the terminal.
+
+Once this is done, the figure is recovered as a PNG file of the name `DjjCut.png` 
+in the folder `code/graphs/Julia`.
+
+### PLOT USING MATHEMATICA
+
+Go to the folder `code/tests/Scripts` and evaluate the Mathematica script
+`Diffusion_Coefficients_Cut.m` using the command
+
+```
+$ math -script Diffusion_Coefficients_Cut.m 
+```
+
+Once done, we recover the plot as a PNG file of the name `DjjCut.png` 
+in the folder "code/graphs/Mathematica".
+
