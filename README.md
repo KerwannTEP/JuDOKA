@@ -113,6 +113,12 @@ Go to the folder `code/tests/Mathematica` and evaluate the Mathematica script
 $ math -script Diffusion_Coefficients_Cut.m 
 ```
 
+If `math` is not defined on Mac OS, then define an alias through the command
+
+```
+alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
+```
+
 Once done, we recover the plot as a PNG file of the name `DjjCut.png` 
 in the folder "code/graphs/Mathematica".
 
@@ -168,6 +174,12 @@ Go to the folder `code/tests/Mathematica` and evaluate the Mathematica script
 
 ```
 $ math -script Diffusion_Coefficients.m 
+```
+
+If `math` is not defined on Mac OS, then define an alias through the command
+
+```
+alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
 ```
 
 Once done, we recover the plot as a PNG file of the name `Djj.png` 
