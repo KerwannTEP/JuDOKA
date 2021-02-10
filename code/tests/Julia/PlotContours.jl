@@ -9,7 +9,7 @@ namefile = "../../data/Dump_Diffusion_Coefficients.hf5"
 
 """
     openData(namefile)
-    
+
 Recovers the data from the .hf5 file `namefile` and returns it as a 4-uple.
 In the order nbj, aMeasure, tabj, tabDRRjj.
 """
@@ -24,17 +24,17 @@ function openData(namefile)
     close(file)
     return nbj, nba, tabaj, tabj, taba, tabDRRjj
 end
-    
+
 ########################################
 # Getting the data
 ########################################
-
+println("Recovering plot data...")
 nbj, nba, tabaj, tabj, taba, tabDRRjj = openData(namefile)
 
 ########################################
 # Converting the data into log-scaling
 ########################################
-
+println("Converting data into log-log scaling...")
 for ij=1:nbj
     tabj[ij] = log10(tabj[ij])
 end
@@ -55,7 +55,7 @@ end
 ########################################
 # Plotting the data
 ########################################
-
+println("Plotting the data...")
 p = Plots.contourf(tabj,taba,tabDRRjj)
 Plots.savefig(p,"../../graphs/Julia/Djj.png") # Saves the figure
 Plots.display(p)
