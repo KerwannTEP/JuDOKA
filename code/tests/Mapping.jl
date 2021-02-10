@@ -10,8 +10,8 @@ include("../sources/Main.jl") # Loading the main code
 ########################################
 jminMeasure, jmaxMeasure = 0.001,1.0 # Range in j where the Djj are computed
 aminMeasure, amaxMeasure = 0.1,1000.0 # Range in j where the Djj are computed
-nbjMeasure = 300 # Number of j for which the Djj are computed
-nbaMeasure = 100 # Number of a for which the Djj are computed
+nbjMeasure = 30 # Number of j for which the Djj are computed
+nbaMeasure = 50 # Number of a for which the Djj are computed
 nbajGrid = nbjMeasure*nbaMeasure # Number of (a,j) for which the Djj are computed
 tabjMeasure = exp.(range(log(jminMeasure),length=nbjMeasure,log(jmaxMeasure)))
 tabaMeasure = exp.(range(log(aminMeasure),length=nbaMeasure,log(amaxMeasure)))
@@ -45,7 +45,7 @@ end
 function init_tabDNRGrid!()
     for iGrid=1:nbajGrid
         tabDNRjjGrid[iGrid] = 0.0
-        
+
         tabDNRJJRedGrid[iGrid] = 0.0
     end
 end
@@ -66,9 +66,9 @@ function tabDRRGrid!()
             if j<=jlc(a) # Do not compute DRR within the loss cone
                 tabDRRjjGrid[iGrid] = 0.0
             elseif j<1.0
-                tabSMARes_parallel = zeros(Float64,2,2) # Container of tabSMARes for the current thread 
+                tabSMARes_parallel = zeros(Float64,2,2) # Container of tabSMARes for the current thread
                 IntTable_K_parallel = IntTable_create!()
-                
+
                 DRR = DRR_jj(a,j,IntTable_K_parallel,tabSMARes_parallel)
                 tabDRRjjGrid[iGrid] = DRR # Computing DRR_jj with the thread's containers
             else
@@ -97,10 +97,10 @@ function tabDNRGrid!()
             a, j = tabajGrid[1,iGrid], tabajGrid[2,iGrid] # Current (a,j) location
 #            if j<=jlc(a) # Do not compute DNR within the loss cone
  #               tabDNRjjGrid[iGrid] = 0.0
-                
+
   #              tabDNRJJRedGrid[iGrid] = 0.0
-   #         elseif j<1.0   
-            if j<1.0 
+   #         elseif j<1.0
+            if j<1.0
                 DNR = DNR_jj(a,j)
                 tabDNRjjGrid[iGrid] = DNR # Computing DNR_jj with the thread's containers
 
@@ -115,13 +115,13 @@ function tabDNRGrid!()
             a, j = tabajGrid[1,iGrid], tabajGrid[2,iGrid] # Current (a,j) location
  #            if j<=jlc(a) # Do not compute DNR within the loss cone
  #               tabDNRjjGrid[iGrid] = 0.0
-                
+
   #              tabDNRJJRedGrid[iGrid] = 0.0
-   #         elseif j<1.0   
-            if j<1.0 
+   #         elseif j<1.0
+            if j<1.0
                 DNR = DNR_jj(a,j)
                 tabDNRjjGrid[iGrid] = DNR # Computing DNR_jj with the global containers
-            
+
                 tabDNRJJRedGrid[iGrid] = DNR_JJ_red(a,j)
             else
                 tabDNRjjGrid[iGrid] = 0.0
@@ -138,8 +138,8 @@ function tabDGrid!()
             a, j = tabajGrid[1,iGrid], tabajGrid[2,iGrid] # Current (a,j) location
   #          if j<=jlc(a) # Do not compute D_jj within the loss cone
    #             tabDjjGrid[iGrid] = 0.0
-    #        elseif j<1.0 
-            if j<1.0    
+    #        elseif j<1.0
+            if j<1.0
                 DNR = tabDNRjjGrid[iGrid]
                 DRR = tabDRRjjGrid[iGrid]
                 tabDjjGrid[iGrid] = DNR + DRR # Computing D_jj with the thread's containers
@@ -152,8 +152,8 @@ function tabDGrid!()
             a, j = tabajGrid[1,iGrid], tabajGrid[2,iGrid] # Current (a,j) location
         #    if j<=jlc(a) # Do not compute D_jj within the loss cone
        #         tabDjjGrid[iGrid] = 0.0
-       #     elseif j<1.0  
-            if j<1.0   
+       #     elseif j<1.0
+            if j<1.0
                 DNR = tabDNRjjGrid[iGrid]
                 DRR = tabDRRjjGrid[iGrid]
                 tabDjjGrid[iGrid] = DNR + DRR # Computing D_jj with the thread's containers
@@ -183,16 +183,16 @@ function writedump!(namefile)
     write(file,"jmax",jmaxMeasure) # Dumping jmaxMeasure
     write(file,"nbj",nbjMeasure) # Dumping nbjMeasure
     write(file,"nba",nbaMeasure) # Dumping nbaMeasure
-    
-    
+
+
     write(file,"tabDNRJJRed",tabDNRJJRedGrid)
-    
+
     write(file,"G",G)
     write(file,"cvel",cvel)
     write(file,"mBH",mBH)
-    
-    
-    
+
+
+
     close(file) # Closing the file
 end
 

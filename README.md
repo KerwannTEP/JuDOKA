@@ -107,7 +107,7 @@ in the folder `code/graphs/Julia`.
 
 ### Plot using Mathematica
 
-Go to the folder `code/tests/Scripts` and evaluate the Mathematica script
+Go to the folder `code/tests/Mathematica` and evaluate the Mathematica script
 `Diffusion_Coefficients_Cut.m` using the command
 
 ```
@@ -164,7 +164,7 @@ in the folder `code/graphs/Julia`.
 
 ### Plot using Mathematica
 
-Go to the folder `code/tests/Scripts` and evaluate the Mathematica script
+Go to the folder `code/tests/Mathematica` and evaluate the Mathematica script
 `Diffusion_Coefficients.m` using the command
 
 ```
