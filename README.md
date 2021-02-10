@@ -19,7 +19,7 @@ sudo ln -s /Applications/Julia-1.5.app/Contents/Resources/julia/bin/julia /usr/l
 Open the terminal in the folder `packages` and type
 
 ```
-$ julia install-pkg.jl
+$ julia Install-pkg.jl
 ```
 
 to install the following packages:
