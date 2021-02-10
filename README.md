@@ -6,15 +6,23 @@ Julia Diffusion of Orbits for Keplerian Actions
 
 Install Julia by following the instruction at `https://julialang.org/downloads/platform/`.
 
+To invoke Julia in the Terminal, you need to make sure that the julia command-line program is in your `PATH`. 
+
+On MacOS, we must create a link in `/usr/local/bin` (here for Julia 1.5):
+
+```
+sudo ln -s /Applications/Julia-1.5.app/Contents/Resources/julia/bin/julia /usr/local/bin/julia
+```
+
 ## Packages
 
-1) Open the terminal and type
+Open the terminal in the folder `packages` and type
 
 ```
-$ julia
+$ julia install-pkg.jl
 ```
 
-2) Install the following packages:
+to install the following packages:
 
 - `StaticArrays`
 - `HypergeometricFunctions`
@@ -27,15 +35,6 @@ $ julia
 - `Distributions`
 - `Plots`
 
-For example, to install the package StaticArrays, one needs to run the command 
-```
-julia> import Pkg; Pkg.add("StaticArrays") 
-```
-
-To exit the Julia terminal, type the command
-```
-julia> exit()
-```
 ### !! WARNING !!
 
 **DO NOT INTERRUPT THE DOWNLOADING OF THE PACKAGES !!!!**
