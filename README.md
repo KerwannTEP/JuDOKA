@@ -11,7 +11,7 @@ To invoke Julia in the Terminal, you need to make sure that the julia command-li
 On MacOS, we must create a link in `/usr/local/bin` (here for Julia 1.5):
 
 ```
-sudo ln -s /Applications/Julia-1.5.app/Contents/Resources/julia/bin/julia /usr/local/bin/julia
+$ sudo ln -s /Applications/Julia-1.5.app/Contents/Resources/julia/bin/julia /usr/local/bin/julia
 ```
 
 ## Packages
@@ -116,7 +116,7 @@ $ math -script Diffusion_Coefficients_Cut.m
 If `math` is not defined on Mac OS, then define an alias through the command
 
 ```
-alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
+$ alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
 ```
 
 Once done, we recover the plot as a PNG file of the name `DjjCut.png` 
@@ -179,7 +179,7 @@ $ math -script Diffusion_Coefficients.m
 If `math` is not defined on Mac OS, then define an alias through the command
 
 ```
-alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
+$ alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
 ```
 
 Once done, we recover the plot as a PNG file of the name `Djj.png` 
