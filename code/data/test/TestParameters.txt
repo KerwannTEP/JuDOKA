@@ -1,0 +1,13 @@
+gamma	mass_star[Msun]	a0[mpc]	Mtot(<a0)
+1.5	1.0	100.0	7900.0
+1.8	50.0	100.0	38000.0
+
+Mapping.jl
+jminMeasure, jmaxMeasure = 0.001,1.0 # Range in j where the Djj are computed
+aminMeasure, amaxMeasure = 0.1,1000.0 # Range in j where the Djj are computed
+nbjMeasure = 300 # Number of j for which the Djj are computed
+nbaMeasure = 100 # Number of a for which the Djj are computed
+
+Cut.jl
+jminMeasure, jmaxMeasure = 0.01,0.999 # Range in j where the Djj are computed
+nbjMeasure = 500 # Number of j for which the Djj are computed

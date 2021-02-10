@@ -11,7 +11,7 @@ include("../sources/Main.jl") # Loading the main code
 jminMeasure, jmaxMeasure = 0.001,1.0 # Range in j where the Djj are computed
 aminMeasure, amaxMeasure = 0.1,1000.0 # Range in j where the Djj are computed
 nbjMeasure = 30 # Number of j for which the Djj are computed
-nbaMeasure = 50 # Number of a for which the Djj are computed
+nbaMeasure = 30 # Number of a for which the Djj are computed
 nbajGrid = nbjMeasure*nbaMeasure # Number of (a,j) for which the Djj are computed
 tabjMeasure = exp.(range(log(jminMeasure),length=nbjMeasure,log(jmaxMeasure)))
 tabaMeasure = exp.(range(log(aminMeasure),length=nbaMeasure,log(amaxMeasure)))
@@ -200,9 +200,13 @@ end
 
 tabajGrid!()
 
+println("Computing SRR diffusion coefficients...")
 @time tabDRRGrid!()
+println("Computing NR diffusion coefficients...")
 @time tabDNRGrid!()
+println("Computing total diffusion coefficients...")
 @time tabDGrid!()
 
 ########################################
+println("Saving data...")
 writedump!(namefile) # Dumping the computed table

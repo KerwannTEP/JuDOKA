@@ -1,14 +1,15 @@
 (* ::Package:: *)
 
 (* ::Title::Initialization:: *)
-(*Diffusion coefficients in orbital space*)
+(*(*Diffusion coefficients in orbital space*)*)
 
 
 (* ::Section::Initialization:: *)
-(*Import data*)
+(*(*Import data*)*)
 
 
 (* ::Input::Initialization:: *)
+SetDirectory[NotebookDirectory[]]
 tabaj=Import["../../data/Dump_Diffusion_Coefficients.hf5",{"Datasets","tabaj"}];
 tabDRRjj=Import["../../data/Dump_Diffusion_Coefficients.hf5",{"Datasets","tabDRRjj"}]; 
 tabDNRjj=Import["../../data/Dump_Diffusion_Coefficients.hf5",{"Datasets","tabDNRjj"}]; 
@@ -20,11 +21,11 @@ DjjTable=Partition[{tabaj,tabDjj}//Transpose//Flatten,3];
 
 
 (* ::Section::Initialization:: *)
-(*Plot data*)
+(*(*Plot data*)*)
 
 
 (* ::Subsection::Initialization:: *)
-(*SRR coefficients*)
+(*(*SRR coefficients*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -32,7 +33,7 @@ pRRjj=ListContourPlot[DRRjjTable,Contours->30,PlotRange->{All,All,All},ScalingFu
 
 
 (* ::Subsection::Initialization:: *)
-(*NR diffusion coefficients*)
+(*(*NR diffusion coefficients*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -40,7 +41,7 @@ pNRjj=ListContourPlot[DNRjjTable,Contours->30,PlotRange->{All,All,All},ScalingFu
 
 
 (* ::Subsection::Initialization:: *)
-(*Total diffusion coefficients*)
+(*(*Total diffusion coefficients*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -48,11 +49,11 @@ pjj=ListContourPlot[DjjTable,Contours->30,PlotRange->{All,All,All},ScalingFuncti
 
 
 (* ::Section::Initialization:: *)
-(*Save data*)
+(*(*Save data*)*)
 
 
 (* ::Subsection::Initialization:: *)
-(*SRR diffusion coefficients*)
+(*(*SRR diffusion coefficients*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -60,7 +61,7 @@ Export["../../graphs/Mathematica/DRRjj.png",pRRjj];
 
 
 (* ::Subsection::Initialization:: *)
-(*NR diffusion coefficients *)
+(*(*NR diffusion coefficients *)*)
 
 
 (* ::Input::Initialization:: *)
@@ -68,7 +69,7 @@ Export["../../graphs/Mathematica/DNRjj.png",pNRjj];
 
 
 (* ::Subsection::Initialization:: *)
-(*Total diffusion coefficients*)
+(*(*Total diffusion coefficients*)*)
 
 
 (* ::Input::Initialization:: *)

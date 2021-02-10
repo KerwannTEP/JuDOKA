@@ -11,7 +11,7 @@ using HDF5 # To have access to .hf5 files
 include("../sources/Main.jl") # Loading the main code
 ########################################
 jminMeasure, jmaxMeasure = 0.01,0.999 # Range in j where the Djj are computed
-nbjMeasure = 30 # Number of j for which the Djj are computed
+nbjMeasure = 100 # Number of j for which the Djj are computed
 tabjMeasure = exp.(range(log(jminMeasure),length=nbjMeasure,log(jmaxMeasure)))
 
 const tabDRRjj = zeros(Float64,nbjMeasure) # Values of the DRR_jj coefficients on the (a,j)-grid
@@ -26,9 +26,9 @@ function tabDRRjj!()
             if jMeasure<jlc(aMeasure) # Do not compute DRR within the loss cone
                 tabDRRjj[ij] = 0.0
             else
-                tabSMARes_parallel = zeros(Float64,2,2) # Container of tabSMARes for the current thread 
+                tabSMARes_parallel = zeros(Float64,2,2) # Container of tabSMARes for the current thread
                 IntTable_K_parallel = IntTable_create!()
-                
+
                 DRR = DRR_jj(aMeasure,jMeasure,IntTable_K_parallel,tabSMARes_parallel)
                 tabDRRjj[ij] = DRR # Computing DRR_jj with the thread's containers
             end
@@ -89,9 +89,11 @@ function writedump!(namefile)
 end
 
 ########################################
-
+println("Computing SRR diffusion coefficients...")
 @time tabDRRjj!()
+println("Computing NR diffusion coefficients...")
 @time tabDNRjj!()
 
 ########################################
+println("Saving data...")
 writedump!(namefile) # Dumping the computed table
