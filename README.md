@@ -54,6 +54,19 @@ The numbers describe:
 - `a0[mpc]`: scale factor of the family (in mpc).
 - `Mtot(<a0)`: Enclosed mass of the family within the radius a0 (scale factor given previously).
 
+## Compute the diffusion coefficients DRR_j and DRR_jj
+
+To compute the diffusion coefficients DRR_j and DRR_jj at some 
+sma `a` and some angular momentum `j`, one needs to open 
+`code/tests/Compute.jl`.
+
+Then, one needs to write for which sma `a` and angular momentum `j` one wants 
+to compute DRRjj(a,j). Once this is done, save the file and run the command 
+
+```
+$ julia Compute.jl
+```
+
 ## Plot a diffusion coefficients a-cut map in orbital space
 
 To compute a mapping of the diffusion coefficients DRR and DNR at fixed 

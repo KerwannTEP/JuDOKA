@@ -1,16 +1,16 @@
 (* ::Package:: *)
 
 (* ::Title::Initialization:: *)
-(*(*(*(*(*(*(*(*Diffusion coefficients at fixed sma*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*Diffusion coefficients at fixed sma*)*)*)*)*)*)*)*)*)
 
 
 (* ::Input::Initialization:: *)
 col=ColorData[10]/@Range[20]
-SetDirectory[NotebookDirectory[]]
+(*SetDirectory[NotebookDirectory[]]*)
 
 
 (* ::Section::Initialization:: *)
-(*(*(*(*(*(*(*(*Import data*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*Import data*)*)*)*)*)*)*)*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -25,11 +25,11 @@ DNRjjTable={tabj,tabDNRjj}//Transpose;
 
 
 (* ::Section::Initialization:: *)
-(*(*(*(*(*(*(*(*Plot data*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*Plot data*)*)*)*)*)*)*)*)*)
 
 
 (* ::Subsection::Initialization:: *)
-(*(*(*(*(*(*(*(*SRR diffusion coefficients*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*SRR diffusion coefficients*)*)*)*)*)*)*)*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -37,7 +37,7 @@ pRRjj=ListPlot[DRRjjTable,PlotRange->{{0.05,1.0},{10^-5,1}},ScalingFunctions->{"
 
 
 (* ::Subsection::Initialization:: *)
-(*(*(*(*(*(*(*(*NR diffusion coefficients*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*NR diffusion coefficients*)*)*)*)*)*)*)*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -45,7 +45,7 @@ pNRjj=ListPlot[DNRjjTable,PlotRange->{{0.05,1},{10^-5,1}},ScalingFunctions->{"Lo
 
 
 (* ::Subsection::Initialization:: *)
-(*(*(*(*(*(*(*(*RR and NR diffusion coefficients together*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*RR and NR diffusion coefficients together*)*)*)*)*)*)*)*)*)
 
 
 (* ::Input::Initialization:: *)
@@ -53,11 +53,11 @@ pjj=ListPlot[{DRRjjTable,DNRjjTable},PlotRange->{{0.05,1},{10^-5,1}},ScalingFunc
 
 
 (* ::Section::Initialization:: *)
-(*(*(*(*(*(*(*(*Save data*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*Save data*)*)*)*)*)*)*)*)*)
 
 
 (* ::Subsection::Initialization:: *)
-(*(*(*(*(*(*(*(*Both RR and NR diffusion coefficients together*)*)*)*)*)*)*)*)
+(*(*(*(*(*(*(*(*(*Both RR and NR diffusion coefficients together*)*)*)*)*)*)*)*)*)
 
 
 (* ::Input::Initialization:: *)
