@@ -61,7 +61,7 @@ sma `a` and some angular momentum `j`, one needs to open
 `code/tests/Compute.jl`.
 
 Then, one needs to write for which sma `a` and angular momentum `j` one wants 
-to compute DRRjj(a,j). Once this is done, save the file and run the command 
+to compute DRR_j(a,j) and DRR_jj(a,j). Once this is done, save the file and run the command 
 
 ```
 $ julia Compute.jl
