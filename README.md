@@ -1,6 +1,6 @@
 # JuDOKA
 
-Julia Diffusion of Orbits for Keplerian Actions
+Julia Diffusion of Orbits for Keplerian Actions.
 
 ## Installation
 
@@ -198,3 +198,6 @@ $ alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
 Once done, we recover the plot as a PNG file of the name `Djj.png` 
 in the folder `code/graphs/Mathematica`.
 
+## Acknowledgements
+
+We are grateful to A. Generozov for his suggestions for improving this code.

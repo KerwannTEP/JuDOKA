@@ -335,6 +335,7 @@ See `Conrad et Kulsrud (1978)`.
 # Remarks
 - All the integrands are computed at the same time.
 - Avoids multiple evalution of cos(theta), xplus and xminus, etc.
+- Logarithmic sampling in energy for better precision at low values of R.
 
 # Arguments
 - `E    ::Float64`: Binding energy.
@@ -346,13 +347,15 @@ function _F_NR(E::Float64,R::Float64,iBath::Int64,nbF::Int64=500)
     xp,xm = xpm(R)
     inf = E
     sup = E/xm
-    step = E/nbF * (1.0/xm - 1.0)
+    log_step = log(sup / inf) / nbF
+    # step = E/nbF * (1.0/xm - 1.0)
     F1,F2,F3,F4,F5,F6,F7 = 0.0,0.0,0.0,0.0,0.0,0.0,0.0
     for kEnergy=1:nbF
-        Ep = inf+(kEnergy-0.5)*step
+        Ep = inf * exp((kEnergy-0.5)*log_step)
+        # Ep = inf+(kEnergy-0.5)*step
         s  = inverse_reduced_E_bind(Ep,E)
         C1,C2,C3,C4,C5,C6,C7 = _C_NR(s,R)
-        DF = DF_E(Ep,iBath)
+        DF = DF_E(Ep,iBath) * Ep
         F1 += DF*C1
         F2 += DF*C2
         F3 += DF*C3
@@ -361,7 +364,8 @@ function _F_NR(E::Float64,R::Float64,iBath::Int64,nbF::Int64=500)
         F6 += DF*C6
         F7 += DF*C7
     end
-    prefactor = 4.0*pi*gamma_prefactor(iBath)*step
+    prefactor = 4.0*pi*gamma_prefactor(iBath)*log_step
+    # prefactor = 4.0*pi*gamma_prefactor(iBath)*step
     F1 *= prefactor
     F2 *= prefactor
     F3 *= prefactor
