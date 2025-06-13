@@ -14,12 +14,18 @@ j = 0.6 # Reduced angular momentum J/Jc (between 0 and 1)
 println("----------------------------------------------")
 println("Computing both DRRj and DRRjj at the same time")
 @time djBoth, djjBoth = DRR_j_jj(a,j)
+tnr = min(0.01/djjBoth, 0.16*(1.005-j)^2/djjBoth)
 println("DRRj(a,j)  = ",djBoth)
 println("DRRjj(a,j) = ",djjBoth)
+println("TNR        = ",tnr)
+
+
 
 println("----------------------------------------------")
 
 println("Computing DRRjj only")
 @time djj_only = DRR_jj(a,j)
+trr = min(0.01/djj_only, 0.16*(1.005-j)^2/djj_only)
 println("DRRjj(a,j) = ",djj_only)
+println("TSRR       = ",trr)
 println("----------------------------------------------")

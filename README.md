@@ -111,7 +111,7 @@ $ julia PlotCut.jl
 ```
     
 A log-log plot of the diffusion coefficients which have just been computed is
-displayed on a window. To terminate the programm, close the window and type
+displayed on a window. To terminate the program, close the window and type
 the **`Enter`** key on the terminal.
 
 Once this is done, the figure is recovered as a PNG file of the name `DjjCut.png` 
@@ -174,7 +174,7 @@ $ julia PlotContours.jl
 ```
     
 A log-log plot of the diffusion coefficients which have just been computed is
-displayed on a window. To terminate the programm, close the window and type
+displayed on a window. To terminate the program, close the window and type
 the **`Enter`** key on the terminal.
 
 Once this is done, the figure is recovered as a PNG file of the name `Djj.png` 
@@ -197,6 +197,25 @@ $ alias math="/Applications/Mathematica.app/Contents/MacOS/MathKernel"
 
 Once done, we recover the plot as a PNG file of the name `Djj.png` 
 in the folder `code/graphs/Mathematica`.
+
+### Random walk at fixed sma
+
+Go to the folder `code/tests` and run the file `RandomWalk.jl` using the command
+
+```
+$ julia RandomWalk.jl
+```
+    
+A plot of the random walk, as well as one of the timestep, will be
+displayed on a window. To close one plot the program, type
+the **`Enter`** key on the terminal.
+
+Once this is done, the figures are recovered as PNG files of the names `Randomwalk_j.png` 
+and `Randomwalk_dt.png` in the folder `code/graphs/Julia`.
+A binary file containing all the random walk information will be created in the folder `code/data` under the name 
+`RandomWalk.hf5`.
+
+One may change the considere sma by directly modifying the value of `aWalk` in line 20 of the file `RandomWalk.jl`. One may also change the parameters of the random walk by modifying the values of the variables in lines 33-34.
 
 ## Acknowledgements
 
