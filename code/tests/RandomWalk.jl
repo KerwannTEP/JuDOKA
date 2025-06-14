@@ -24,7 +24,7 @@ const nbjMeasure = 100 # Number of j for which the coefficients are computed
 const jminMeasure, jmaxMeasure = 0.001,1.0 # Range in j where the coefficients are computed
 const tabjMeasure = range(jminMeasure,length=nbjMeasure,jmaxMeasure)
 const arrayDj_Djj_serial = zeros(Float64,2,nbjMeasure) # Values of the D_j and D_jj coefficients on the (a,j)-grid
-const arrayTjj_serial = zeros(Float64,nbjMeasure) # Values of the D_j and D_jj coefficients on the (a,j)-grid
+const arrayTjj_serial = zeros(Float64,3,nbjMeasure) # Values of the D_j and D_jj coefficients on the (a,j)-grid
 
 ##################################################
 # Parameters of the stochastic walk
@@ -71,14 +71,18 @@ function arrayDj_Djj!(arrayDj_Djj_arg=arrayDj_Djj_serial,arrayTjj_arg=arrayTjj_s
             # Timestep criterion is taken from Shapiro & Marchant (1978), applied for both NR and SRR, following Bar-Or & Alexander (2016)
             tnr = min(0.01/DNR[4], 0.16*(1.0075-j)^2/DNR[4], max(0.0625*(j-jlca)^2/DNR[4], 0.01*jlca^2/DNR[4]))
             trr = min(0.01/DRR[2], 0.16*(1.0075-j)^2/DRR[2], max(0.0625*(j-jlca)^2/DRR[2], 0.01*jlca^2/DRR[2]))
-            arrayTjj_serial[ij] = min(tnr, trr)
+            arrayTjj_serial[1,ij] = tnr #min(tnr, trr)
+            arrayTjj_serial[2,ij] = trr
+            arrayTjj_serial[3,ij] = min(tnr, trr)
 
             tabDjj_nr_rr[1, ij] = DNR[4]
             tabDjj_nr_rr[2, ij] = DRR[2]
         else
             arrayDj_Djj_arg[1,ij] = 0.0
             arrayDj_Djj_arg[2,ij] = 0.0
-            arrayTjj_serial[ij] = arrayTjj_serial[ij-1]
+            arrayTjj_serial[1,ij] = arrayTjj_serial[1,ij-1]
+            arrayTjj_serial[2,ij] = arrayTjj_serial[2,ij-1]
+            arrayTjj_serial[3,ij] = arrayTjj_serial[3,ij-1]
         end
     end  
     return ijmin+1
@@ -92,6 +96,7 @@ p = plot(tabjMeasure[ijmin:nbjMeasure-1], [arrayDj_Djj_serial[2,ijmin:nbjMeasure
         yaxis=:log10, xaxis=:log10, 
         xticks=10.0 .^ (-3:1:0), xminorticks=10,
         yticks=10.0 .^ (-6:1:2), yminorticks=10,
+        style=[:solid :dash :dash],
         frame=:box, label=["Total" "NR" "RR"],
         xlabel=L"j", ylabel=L"D_{jj}",
         title="Diffusion coefficients jj",
@@ -100,8 +105,19 @@ p = plot(tabjMeasure[ijmin:nbjMeasure-1], [arrayDj_Djj_serial[2,ijmin:nbjMeasure
 display(p)
 readline()
 
-#println( arrayDj_Djj[1,:])
-#println( arrayDj_Djj[2,:])
+p = plot(tabjMeasure[ijmin:nbjMeasure-1], [arrayTjj_serial[3,ijmin:nbjMeasure-1] arrayTjj_serial[1,ijmin:nbjMeasure-1] arrayTjj_serial[2,ijmin:nbjMeasure-1]],
+        yaxis=:log10, xaxis=:log10, 
+        xticks=10.0 .^ (-3:1:0), xminorticks=10,
+        yticks=10.0 .^ (-6:1:2), yminorticks=10,
+        style=[:solid :dash :dash],
+        frame=:box, label=["Total" "NR" "RR"],
+        xlabel=L"j", ylabel=L"T_{jj}",
+        title="Diffusion time",
+        legend=:topleft)
+
+display(p)
+readline()
+
 #################################################
 # Functions to Interpolate the diffusion coefficients
 ##################################################
@@ -117,7 +133,7 @@ function get_IntDjj(arrayDj_Djj=arrayDj_Djj_serial) # Returns the interpolation 
 end
 
 function get_IntTjj(arrayTjj=arrayTjj_serial) # Returns the interpolation function of Djj at fixed a_{iCluster}
-    intTjj = Interpolations.scale(interpolate(arrayTjj, BSpline(Linear())),tabjMeasure) # Constructing the interpolation function for j-> Djj(j,a_Cluster)
+    intTjj = Interpolations.scale(interpolate(arrayTjj[3,:], BSpline(Linear())),tabjMeasure) # Constructing the interpolation function for j-> Djj(j,a_Cluster)
     return intTjj
 end
 
@@ -305,7 +321,7 @@ function get_j_itp(time)
 end
 
 nbt = 1000
-tabt_s = range(0, timeEnd, length=nbt)
+tabt_s = range(0, tabt[end], length=nbt)
 
 anim = @animate for i=1:nbt
 
