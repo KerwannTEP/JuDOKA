@@ -8,6 +8,7 @@
 using Random, Distributions # To be able to use the normal distribution
 using DelimitedFiles # To be able to load .txt files
 using Plots # To be able to plot data
+using Plots.PlotMeasures
 using LaTeXStrings
 using HDF5
 
@@ -68,8 +69,8 @@ function arrayDj_Djj!(arrayDj_Djj_arg=arrayDj_Djj_serial,arrayTjj_arg=arrayTjj_s
             arrayDj_Djj_arg[2,ij] = DRR[2] + DNR[4]
 
             # Timestep criterion is taken from Shapiro & Marchant (1978), applied for both NR and SRR, following Bar-Or & Alexander (2016)
-            tnr = min(0.01/DNR[4], 0.16*(1.005-j)^2/DNR[4])
-            trr = min(0.01/DRR[2], 0.16*(1.005-j)^2/DRR[2])
+            tnr = min(0.01/DNR[4], 0.16*(1.0075-j)^2/DNR[4], max(0.0625*(j-jlca)^2/DNR[4], 0.01*jlca^2/DNR[4]))
+            trr = min(0.01/DRR[2], 0.16*(1.0075-j)^2/DRR[2], max(0.0625*(j-jlca)^2/DRR[2], 0.01*jlca^2/DRR[2]))
             arrayTjj_serial[ij] = min(tnr, trr)
 
             tabDjj_nr_rr[1, ij] = DNR[4]
@@ -216,7 +217,7 @@ p = plot(tabt, tabj, legend=false,
         title="Eccentricity relaxation",
         yticks=0:0.2:1, yminorticks=2,
         ylims=(0, 1),
-        xticks=0:2:10, xminorticks=2,
+        # xticks=0:2:10, xminorticks=2,
         xlims=(0, timeEnd),
         frame=:box)
 
@@ -228,7 +229,7 @@ plot!(p, [0, timeEnd], [jlca, jlca], label=:false,
 
 annotate!(p, 0.9*timeEnd, jlca+0.02, text("Loss cone", :red, 7,  rotation = 0))
 
-savefig(p,"../graphs/Julia/RandomWalk_j.png") # Saves the figure
+savefig(p,"../graphs/Julia/RandomWalk_j.pdf") # Saves the figure
 display(p) # Display plot
 readline() # Plot window stays open until we press "Enter"
 
@@ -240,11 +241,11 @@ p = plot(tabt[2:end], tabdt, legend=false,
         yticks=10.0 .^ (-5:1:0), yminorticks=10,
         ylims=(10.0^(log10dtmin), 10.0^(log10dtmax)),
         yaxis=:log10,
-        xticks=0:2:10, xminorticks=2,
+        # xticks=0:2:10, xminorticks=2,
         xlims=(0, timeEnd),
         frame=:box)
 
-savefig(p,"../graphs/Julia/RandomWalk_dt.png") # Saves the figure
+savefig(p,"../graphs/Julia/RandomWalk_dt.pdf") # Saves the figure
 display(p) # Display plot
 readline() # Plot window stays open until we press "Enter"
 
@@ -259,3 +260,97 @@ function writedump!(newfile)
 end
 
 writedump!(newfile)
+
+#################################################
+# Gif of the orbit shapes
+##################################################
+
+nbj = length(tabj)
+
+nbth = 1000
+tabtheta = range(0, 2*pi, length=nbth)
+tabx = zeros(Float64, nbth)
+taby = zeros(Float64, nbth)
+
+tabxg = rg .* cos.(tabtheta)
+tabyg = rg .* sin.(tabtheta)
+
+function get_j_itp(time)
+
+    il = 1
+    ir = nbj
+    tl = tabt[il]
+    tr = tabt[ir]
+
+    while (ir-il > 1)
+        im = div(il+ir,2)
+        tm = tabt[im]
+
+        if (tl <= time < tm)
+            ir = im 
+            tr = tm 
+        else
+            il = im 
+            tl = tm 
+        end
+
+    end
+
+    jl = tabj[il]
+    jr = tabj[ir]
+
+    j = jl + (jr-jl)/(tr-tl) * (time-tl)
+
+    return j
+end
+
+nbt = 1000
+tabt_s = range(0, timeEnd, length=nbt)
+
+anim = @animate for i=1:nbt
+
+    time = tabt_s[i]
+    println("Progress = ", i, "/", nbt)
+    
+    j = get_j_itp(time)
+    e = sqrt(1-j^2)
+
+    for ith=1:nbth
+        theta = tabtheta[ith]
+        r = aWalk*j^2/(1+e*cos(theta))
+        x = r*cos(theta)
+        y = r*sin(theta)
+        tabx[ith] = x
+        taby[ith] = y 
+    end
+
+    time = round(time, digits=2)
+
+    plot(tabx , taby, 
+        xlabel=L"x"*" [kpc]", ylabel=L"y"*" [kpc]", 
+        title="Time = "*string(time)*" Myr",
+        framestyle=:box, label=false, 
+        xlims=(-2*aWalk, 2*aWalk), ylims=(-2*aWalk,2*aWalk), 
+        aspect_ratio=1, size=(800,800), 
+        left_margin = [2mm 0mm], right_margin = [2mm 0mm], 
+        background_color = :black,
+        linestyle=:solid,
+        linecolor=:cyan)
+
+    plot!(tabxg , tabyg, 
+        framestyle=:box, label=false, 
+        xlims=(-2*aWalk, 2*aWalk), ylims=(-2*aWalk,2*aWalk), 
+        aspect_ratio=1, size=(800,800), 
+        left_margin = [2mm 0mm], right_margin = [2mm 0mm], 
+        background_color = :black,
+        fillalpha = 1, 
+        linecolor = :white,
+        linestyle=:dash)
+
+    scatter!([0], [0], 
+        color = "red", 
+        label = "SMBH", 
+        markersize = 1)
+end 
+
+gif(anim, "../graphs/Julia/RandomWalk_shape.gif", fps = 20) # Saves the figure
